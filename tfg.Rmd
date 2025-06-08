@@ -1,0 +1,2335 @@
+---
+title: "tfg"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+date: "2023-10-30"
+---
+
+```{r simulacion ar}
+phi <- 0.7
+n <- 200  
+set.seed(42) 
+epsilon <- rnorm(n, mean = 0, sd = 1) 
+x <- numeric(n) 
+for (t in 2:n) {
+  x[t] <- phi * x[t - 1] + epsilon[t]
+}
+plot(x, type = "l", col = "blue", lwd = 2,
+     main = expression(paste("Proceso AR(1) con ", phi, " = 0.7")),
+     xlab = "Tiempo", ylab = "Valor")
+abline(h = 0, col = "gray", lty = 2)
+
+theta <- 0.5   
+n <- 200       
+set.seed(42) 
+epsilon <- rnorm(n, mean = 0, sd = 1) 
+x <- numeric(n) 
+for (t in 2:n) {
+  x[t] <- epsilon[t] + theta * epsilon[t - 1]
+}
+
+plot(x, type = "l", col = "darkred", lwd = 2,
+     main = expression(paste("Proceso MA(1) con ", theta, " = 0.5")),
+     xlab = "Tiempo", ylab = "Valor")
+abline(h = 0, col = "gray", lty = 2)
+
+set.seed(123)  
+time <- seq(0, 1, length.out = 500)
+original_signal <- sin(2 * pi * 5 * time) + 0.5 * sin(2 * pi * 10 * time) + rnorm(500, mean = 0, sd = 0.2)
+
+# Perform FFT
+fft_result <- fft(original_signal)
+# Plot original and reconstructed signals
+plot(time, original_signal, type = "l", col = "red", lwd = 2, main = "Noisy Signal", ylab = "Amplitude", xlab = "Time")
+
+
+# Generate the sine waves
+sine_wave1 <- sin(2 * pi * 5 * time)
+sine_wave2 <- sin(2 * pi * 10 * time)
+
+# Sum the two sine waves
+combined_signal <- sine_wave1 + sine_wave2
+plot(combined_signal, type="l")
+
+datos_bolsa <- read.csv("C:\\Users\\David\\Desktop\\MDAT\\2278_IBEX35.csv", sep=";", dec=".")
+head(datos_bolsa)
+
+datos_diferencia <- diff(datos_bolsa$Apertura)
+head(datos_diferencia)
+
+datos_Clasificacion <- ifelse(datos_diferencia > 0, 1, 0)
+head(datos_Clasificacion)
+
+transiciones <- table(head(datos_Clasificacion, -1), tail(datos_Clasificacion, -1))
+
+matriz_transicion <- prop.table(transiciones, 1)
+P = matrix(c( 0.4715596 , 0.5284404 , 0.4811715 , 0.5188285),nrow = 2,byrow = TRUE) 
+print(matriz_transicion)
+#install.packages("markovchain")
+library(markovchain)
+
+cadena_markov <- new("markovchain", states = c("0", "1"), 
+                     transitionMatrix = P, 
+                     name = "Cadena de Markov IBEX35")
+
+print(cadena_markov)
+
+cadena = new("markovchain",transitionMatrix=P,states=c("Baja Precio","Sube Precio " ),name="Cadena 1") 
+plot(cadena)
+
+predict(cadena ,newdata = "Baja Precio",n.ahead = 3)
+datos_bolsa <- read.csv("C:\\Users\\David\\Desktop\\MDAT\\2278_IBEX35.csv", sep=";", dec=".")
+head(datos_bolsa)
+
+fft_result <- fft(datos_bolsa$Apertura)
+
+magnitudes <- Mod(fft_result)
+
+threshold <- quantile(magnitudes, 0.98)
+
+filtered_fft <- ifelse(magnitudes > threshold, fft_result, 0)
+
+sine_wave1 <- sin(2 * pi * 0 * time)
+sine_wave2 <- sin(2 * pi * 1 * time)
+sine_wave3 <- sin(2 * pi * 2 * time)
+sine_wave4 <- sin(2 * pi * 3 * time)
+sine_wave5 <- sin(2 * pi * 4 * time)
+sine_wave6 <- sin(2 * pi * 5 * time)
+sine_wave7 <- sin(2 * pi * 6 * time)
+sine_wave8 <- sin(2 * pi * 8 * time)
+sine_wave9 <- sin(2 * pi * 9 * time)
+sine_wave10 <- sin(2 * pi * 11 * time)
+sine_wave11<- sin(2 * pi * 17 * time)
+sine_wave12<- sin(2 * pi * 21 * time)
+
+sine_wave13 <- sin(2 * pi * 10 * time)
+sine_wave14<- sin(2 * pi * 13 * time)
+sine_wave15<- sin(2 * pi * 14 * time)
+sine_wave16<- sin(2 * pi * 15 * time)
+sine_wave17<- sin(2 * pi * 18 * time)
+sine_wave18<- sin(2 * pi * 19 * time)
+sine_wave19<- sin(2 * pi * 20 * time)
+sine_wave20<- sin(2 * pi * 23 * time)
+sine_wave21<- sin(2 * pi * 25 * time)
+sine_wave22 <- sin(2 * pi * 26* time)
+sine_wave23<- sin(2 * pi * 32 * time)
+sine_wave24<- sin(2 * pi * 43 * time)
+
+library(scales)
+
+suma <- sine_wave1 + sine_wave2 +sine_wave3 + sine_wave4 + sine_wave5 + sine_wave6
+
+escalados <- rescale(sine_wave1, to = c(0, 1)) + rescale(sine_wave2, to = c(0, 1)) + rescale(sine_wave3, to = c(0, 1)) + rescale(sine_wave4, to = c(0, 1)) + rescale(sine_wave5, to = c(0, 1)) + rescale(sine_wave6, to = c(0, 1))
+
+datos_escalados <- rescale(datos_bolsa$Apertura[1:500], to = c(0, 1))
+plot(suma, type="l" , col="red" )
+lines(datos_escalados, col = "blue")
+ 
+
+#funcion <- function(x1, x2, x3, x4, x5) x1*rescale(sine_wave1, to = c(0, 1)) + x2*rescale(sine_wave2, to = c(0, 1)) + x3*rescale(sine_wave3, to = c(0, 1)) + x4*rescale(sine_wave4, to = c(0, 1)) + x5*rescale(sine_wave5, to = c(0, 1)) + x6*rescale(sine_wave6, to = c(0, 1))
+
+fr <- function(x) {   
+    x1 <- x[1]
+    x2 <- x[2]
+    x3 <- x[3]
+    x4 <- x[4]
+    x5 <- x[5]
+    x6 <- x[6]
+    sum((datos_escalados - (x1*rescale(sine_wave1, to = c(0, 1)) + x2*rescale(sine_wave2, to = c(0, 1)) + x3*rescale(sine_wave3, to = c(0, 1)) + x4*rescale(sine_wave4, to = c(0, 1)) + x5*rescale(sine_wave5, to = c(0, 1)) + x6*rescale(sine_wave6, to = c(0, 1))))^2 )
+}
+
+optimizacion <- optim(c(0,0,0,0,0,0), fr)
+
+
+resultado <- optimizacion$par[1]*rescale(sine_wave1, to = c(0, 1)) + optimizacion$par[2]*rescale(sine_wave2, to = c(0, 1))+ optimizacion$par[3]*rescale(sine_wave3, to = c(0, 1))+ optimizacion$par[4]*rescale(sine_wave4, to = c(0, 1))+ optimizacion$par[5]*rescale(sine_wave5, to = c(0, 1))+ 
+optimizacion$par[6]*rescale(sine_wave6, to = c(0, 1))
+
+plot(resultado, type = "l", col="red", ylim = c(0,1 ))
+lines(datos_escalados , col = "blue")
+
+# Definir los coeficientes AR (phi)
+phi1 <- 0.5   # Valor de phi1
+phi2 <- -0.25 # Valor de phi2
+phi3 <- 0.1   # Valor de phi3
+
+# Simular una serie temporal con un modelo ARIMA(3,1,0)
+set.seed(123)  # Fijar una semilla para reproducibilidad
+simulated_data <- arima.sim(model = list(order = c(3, 1, 0), ar = c(phi1, phi2, phi3)), 
+                            n = 200)
+
+# Graficar la serie temporal simulada
+plot(simulated_data, type = "l", main = "Simulación ARIMA(3,1,0)", 
+     xlab = "Tiempo", ylab = "Valor", col = "blue")
+
+
+simulated_data
+
+
+```
+
+```{r}
+# Instala RColorBrewer si no lo tienes
+# install.packages("RColorBrewer")
+
+library(RColorBrewer)
+
+# Configuración
+set.seed(123)
+n_trayectorias <- 5
+n_pasos <- 100
+
+# Simular trayectorias
+trayectorias <- matrix(0, nrow = n_pasos, ncol = n_trayectorias)
+for (i in 1:n_trayectorias) {
+  pasos <- rnorm(n_pasos)
+  trayectorias[, i] <- cumsum(pasos)
+}
+
+# Colores sin amarillo (Set1 evita colores pálidos)
+colores <- brewer.pal(n = 5, name = "Set1")  # 5 colores bien contrastados
+
+# Graficar
+matplot(trayectorias, type = "l", lty = 1, col = colores,
+        xlab = "Tiempo", ylab = expression(X[t]),
+        main = "Trayectorias de un Proceso Estocástico")
+
+
+
+```
+
+
+```{r}
+
+library(forecast)
+
+set.seed(123)
+t <- 1:120
+seasonality <- 10 * sin(2 * pi * t / 12)
+trend <- 0.5 * t
+noise <- rnorm(120, mean = 0, sd = 5)
+serie <- trend + seasonality + noise
+ts_data <- ts(serie, frequency = 12, start = c(2010, 1))
+
+# SARIMA(p=2,d=1,q=1)(P=1,D=1,Q=1)[12]
+modelo_sarima <- Arima(ts_data, order = c(2,1,1), seasonal = c(1,1,1))
+
+forecast_sarima <- forecast(modelo_sarima, h = 24)
+
+plot(forecast_sarima, main = "Pronóstico SARIMA (2,1,1)(1,1,1)[12]",
+     xlab = "Año", ylab = "Valor simulado")
+
+```
+
+
+
+```{r ejemplo acf y pacf}
+library(forecast)
+set.seed(123)
+ar_model <- arima.sim(model = list(ar = c(0.5, -0.3)), n = 100)
+plot(ar_model, main = "Serie temporal simulada (AR(2))", ylab = "Valores", xlab = "Tiempo")
+acf(ar_model, main = "Función de Autocorrelación (ACF)")
+pacf(ar_model, main = "Función de Autocorrelación Parcial (PACF)")
+
+
+ma_model <- arima.sim(model = list(ma = c(0.6, 0.3)), n = 100)
+plot(ma_model, main = "Serie temporal simulada (MA(2))", ylab = "Valores", xlab = "Tiempo")
+acf(ma_model, main = "Función de Autocorrelación (ACF)")
+pacf(ma_model, main = "Función de Autocorrelación Parcial (PACF)")
+```
+
+```{r}
+set.seed(123)  
+n <- 100                  
+epsilon <- rnorm(n, mean = 0, sd = 1) 
+X <- numeric(n)              
+X[1] <- 0                    
+
+for (t in 2:n) {
+  X[t] <- X[t-1] + epsilon[t]  
+}
+
+plot(X, type = "l", col = "blue", lwd = 2,
+     main = "Ejemplo de Martingala",
+     xlab = "Tiempo", ylab = expression(X[t]))
+
+
+```
+
+
+
+
+```{r datos}
+estacionalidad <- read.csv("C:\\Users\\David\\Desktop\\tfg\\estacionalidad.csv", sep=",", dec=".")
+colnames(estacionalidad)[2] <-"Year"
+colnames(estacionalidad)[3] <-"Mes"
+
+gestion_energia <- read.csv("C:\\Users\\David\\Desktop\\tfg\\gestion_energia.csv", sep=",", dec=".")
+
+movilidad_aerea <- read.csv("C:\\Users\\David\\Desktop\\tfg\\movilidad_aerea.csv", sep=",", dec=".")
+
+movilidad_marítima <- read.csv("C:\\Users\\David\\Desktop\\tfg\\movilidad_marítima.csv", sep=",", dec=".")
+
+
+```
+
+```{r ordenador los datos estacionalidad}
+# Obtener los límites de Year y Mes
+min_Year <- min(estacionalidad$Year)
+min_Mes <- min(estacionalidad$Mes)
+max_Year <- max(estacionalidad$Year)
+max_Mes <- max(estacionalidad$Mes)
+
+# Crear un data frame vacío para almacenar los datos ordenados
+estacionalidad_ordenada <- data.frame(establecimientos = numeric(0), Year = numeric(0), Mes = numeric(0))
+
+# Bucle para recorrer los años y meses
+for (i in min_Year:max_Year) {
+  for (j in min_Mes:max_Mes) {
+    # Filtrar datos para el año (i) y mes (j) actual
+    filas_condicion <- subset(estacionalidad, Year == i & Mes == j)
+    
+    # Ordenar los datos por Year y Mes
+    filas_condicion <- filas_condicion[order(filas_condicion$Year, filas_condicion$Mes), ]
+    
+    # Concatenar los datos al data frame estacionalidad_ordenada
+    estacionalidad_ordenada <- rbind(estacionalidad_ordenada, filas_condicion)
+  }
+}
+
+# Mostrar los datos ordenados
+print(estacionalidad_ordenada)
+
+```
+
+```{r ordenador los datos gestion_energia}
+# Obtener los límites de Year y Mes
+min_Year <- min(gestion_energia$Year)
+min_Mes <- min(gestion_energia$Mes)
+max_Year <- max(gestion_energia$Year)
+max_Mes <- max(gestion_energia$Mes)
+
+# Crear un data frame vacío para almacenar los datos ordenados
+gestion_energia_ordenada <- data.frame(establecimientos = numeric(0), Year = numeric(0), Mes = numeric(0))
+
+# Bucle para recorrer los años y meses
+for (i in min_Year:max_Year) {
+  for (j in min_Mes:max_Mes) {
+    # Filtrar datos para el año (i) y mes (j) actual
+    filas_condicion <- subset(gestion_energia, Year == i & Mes == j)
+    
+    # Ordenar los datos por Year y Mes
+    filas_condicion <- filas_condicion[order(filas_condicion$Year, filas_condicion$Mes), ]
+    
+    # Concatenar los datos al data frame estacionalidad_ordenada
+    gestion_energia_ordenada <- rbind(gestion_energia_ordenada, filas_condicion)
+  }
+}
+
+# Mostrar los datos ordenados
+print(gestion_energia_ordenada)
+
+```
+
+
+
+```{r series temporales}
+estacionalidadTS = ts(estacionalidad_ordenada$establecimientos,freq=12,start=c(2008,1))
+
+gestion_energiaTS = ts(gestion_energia_ordenada$VALOR,freq=12,start=c(2010,1))
+
+#movilidad_aereaTS = ts(movilidad_aerea_ordenada$Value,freq=12,start=c(2006,1))
+
+#movilidad_marítimaTS = ts(movilidad_marítima_ordenada$Value2,freq=12,start=c(2006,1))
+
+plot(estacionalidadTS)
+plot(gestion_energiaTS)
+#plot(movilidad_aereaTS)
+#plot(movilidad_marítimaTS)
+```
+
+```{r TRAIN TEST VALIDATION}
+# para la primera serie
+
+n <- length(estacionalidadTS)
+
+prop_train <- 0.6
+prop_test <- 0.3
+prop_validation <- 0.1
+
+
+size_train <- round(n * prop_train)
+size_test <- round(n * prop_test)
+size_validation <- n - size_train - size_test
+
+
+index_train <- 1:size_train
+index_test <- (size_train + 1):(size_train + size_test)
+index_validation <- (size_train + size_test + 1):n
+
+
+estacionalidad_train <- estacionalidadTS[index_train]
+estacionalidad_test <- estacionalidadTS[index_test]
+estacionalidad_validation <- estacionalidadTS[index_validation]
+
+estacionalidad_train = ts(estacionalidad_train,freq=12,start=c(2008,1))
+estacionalidad_test = ts(estacionalidad_test,freq=12,start=c(2017,4))
+estacionalidad_validation = ts(estacionalidad_validation,freq=12,start=c(2021,12))
+
+
+# para la segunda serie 
+
+n <- length(gestion_energiaTS)
+
+prop_train <- 0.6
+prop_test <- 0.3
+prop_validation <- 0.1
+
+
+size_train <- round(n * prop_train)
+size_test <- round(n * prop_test)
+size_validation <- n - size_train - size_test
+
+
+index_train <- 1:size_train
+index_test <- (size_train + 1):(size_train + size_test)
+index_validation <- (size_train + size_test + 1):n
+
+
+gestionenergia_train <- gestion_energiaTS[index_train]
+gestionenergia_test <- gestion_energiaTS[index_test]
+gestionenergia_validation <- gestion_energiaTS[index_validation]
+
+gestionenergia_train = ts(gestionenergia_train,freq=12,start=c(2010,1))
+gestionenergia_test = ts(gestionenergia_test,freq=12,start=c(2017,8))
+gestionenergia_validation = ts(gestionenergia_validation,freq=12,start=c(2021,5))
+
+
+
+
+```
+
+
+
+
+
+
+
+```{r}
+library(scales)
+library(forecast)
+library(Metrics)
+
+datos_ts <- ts(estacionalidad_ordenada$establecimientos[1:125], frequency = 12)
+descomp <- decompose(datos_ts)
+serie_sin_tendencia <- descomp$seasonal + descomp$random
+serie_sin_tendencia <- na.omit(as.vector(serie_sin_tendencia))
+serie_sin_tendencia <- serie_sin_tendencia[4:112]
+
+datos_escalados <- rescale(serie_sin_tendencia, to = c(0, 1))
+
+fft_result <- fft(datos_escalados)
+magnitudes <- Mod(fft_result)
+frecuencias <- (0:(length(magnitudes)-1)) / length(magnitudes)
+
+umbral <- quantile(magnitudes, 0.9)
+indices_frec_importantes <- which(magnitudes > umbral & frecuencias <= 0.5)
+
+n <- length(datos_escalados)
+tiempo <- 1:n
+
+X <- matrix(1, nrow = n, ncol = 1 + 2 * length(indices_frec_importantes)) 
+colnames(X) <- c("intercepto", paste0("cos_", indices_frec_importantes), paste0("sin_", indices_frec_importantes))
+
+for (i in seq_along(indices_frec_importantes)) {
+  freq <- frecuencias[indices_frec_importantes[i]]
+  X[, 2*i]   <- cos(2 * pi * freq * tiempo)
+  X[, 2*i+1] <- sin(2 * pi * freq * tiempo)
+}
+
+modelo <- lm(datos_escalados ~ X - 1)  # "-1" quita el intercepto extra
+ajuste <- fitted(modelo)
+
+plot(datos_escalados, type = "l", col = "red", main = "Ajuste Armónico")
+lines(ajuste, col = "blue", lwd = 2)
+
+errores <- datos_escalados - ajuste
+plot(errores, type = "l", main = "Errores del modelo", col = "darkgreen")
+hist(errores, breaks = 20, main = "Histograma de errores", col = "lightblue")
+shapiro.test(errores)
+
+Box.test(errores, lag = 20, type = "Ljung-Box")
+
+# Análisis de errores
+errores <- datos_escalados - ajuste
+plot(errores, type = "l", main = "Errores del modelo", col = "darkgreen")
+hist(errores, breaks = 20, main = "Histograma de errores", col = "lightblue")
+shapiro.test(errores)
+Box.test(errores, lag = 20, type = "Ljung-Box")
+
+# Ajuste de un modelo ARMA(p, q) a los errores
+modelo_arma <- auto.arima(errores)  
+summary(modelo_arma)
+
+tsdiag(modelo_arma)
+
+# Valores reales y ajustados (ya escalados entre 0 y 1)
+original_armonico <- datos_escalados
+fitted_armonico <- ajuste
+
+# Cálculo del MAPE y MEDAPE
+mape_armonico <- mape(original_armonico, fitted_armonico)
+medape_armonico <- median(abs((original_armonico - fitted_armonico) / original_armonico), na.rm = TRUE)
+
+# Mostrar resultados
+cat("MAPE Modelo Armónico:", round(mape_armonico * 100, 2), "%\n")
+cat("MEDAPE Modelo Armónico:", round(medape_armonico * 100, 2), "%\n")
+
+
+
+```
+
+```{r predicciones armonicos serie 1}
+n <- length(datos_escalados)
+tiempo_actual <- 1:n
+h <- 100
+tiempo_futuro <- (n + 1):(n + h)
+frecuencias_importantes <- frecuencias[indices_frec_importantes]
+X_future <- matrix(NA, nrow = h, ncol = ncol(X))
+colnames(X_future) <- colnames(X)  # aseguramos mismos nombres
+X_future[, "intercepto"] <- 1
+for (i in 1:length(indices_frec_importantes)) {
+  freq <- frecuencias_importantes[i]
+  X_future[, paste0("cos_", indices_frec_importantes[i])] <- cos(2 * pi * freq * tiempo_futuro)
+  X_future[, paste0("sin_", indices_frec_importantes[i])] <- sin(2 * pi * freq * tiempo_futuro)
+}
+X_future <- as.data.frame(X_future)
+pred_armonico <- predict(modelo, newdata = data.frame(X = X_future))
+plot(pred_armonico, type="l")
+
+#fourier1 <- pred_armonico[1:min_length]
+#resultado_reescalado <- resultado1[1:min_length] * (max(estacionalidad_train) - min(estacionalidad_train)) + min(estacionalidad_train)
+
+#plot(resultado_reescalado ,type="l")
+
+fitted_armonico <- predict(modelo, newdata = data.frame(X))
+original_armonico <- estacionalidad_train  # o estacionalidad_train si aplica
+test <- rescale(as.numeric(estacionalidad_test), to = c(0, 1))
+plot(as.numeric(test), type="l")
+lines(pred_armonico[7:56],col="red")
+mape_test <- mean(abs((as.numeric(test) - pred_armonico[7:62]) / test), na.rm = TRUE)
+
+medape_test <- median(abs((as.numeric(test) - pred_armonico[7:62]) / test), na.rm = TRUE)
+
+cat("MAPE en test/futuro:", round(mape_test * 100, 2), "%\n")
+cat("MEDAPE en test/futuro:", round(medape_test * 100, 2), "%\n")
+
+
+```
+
+
+
+```{r ajustes primera serie a mano}
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(0,0,0), 
+              seasonal = list(order = c(0,0,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(1,0,0), 
+              seasonal = list(order = c(0,0,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(1,0,0), 
+              seasonal = list(order = c(0,1,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(1,0,0), 
+              seasonal = list(order = c(1,1,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(1,0,0), 
+              seasonal = list(order = c(1,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(1,0,1), 
+              seasonal = list(order = c(1,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(2,0,1), 
+              seasonal = list(order = c(2,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(2,1,1), 
+              seasonal = list(order = c(2,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+autoarima <- auto.arima(estacionalidad_train)
+
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(0,0,0), 
+              seasonal = list(order = c(0,1,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(3,0,0), 
+              seasonal = list(order = c(2,1,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+library(forecast)
+
+fit3 <- Arima(estacionalidad_train, 
+              order = c(3,0,0), 
+              seasonal = list(order = c(2,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+```
+
+```{r valores ajustados modelo 1 }
+
+library(forecast)
+library(ggplot2)
+modelo1 <- Arima(estacionalidad_train, order=c(2,1,1), seasonal=c(2,1,1))
+modelo2 <- Arima(estacionalidad_train, order=c(1,0,0), seasonal=c(2,2,0))
+modelo3 <- Arima(estacionalidad_train, order=c(1,1,1), seasonal=c(0,1,2))
+
+ajuste1 <- fitted(modelo1)
+fitted_values_sarima1 <- fitted(modelo2)
+ajuste3 <- fitted(modelo3)
+
+df <- data.frame(
+  Fecha = time(estacionalidad_train),
+  Original = as.numeric(estacionalidad_train),
+  Ajuste1 = ajuste1,
+  Ajuste2 = fitted_values_sarima1,
+  Ajuste3 = ajuste3
+)
+
+ggplot(df, aes(x=Fecha)) +
+  geom_line(aes(y=Original), color="red", size=1) +   # Serie original en negro
+  geom_line(aes(y=Ajuste1), color="green", size=1) +      # Ajuste del primer modelo en rojo
+  geom_line(aes(y=fitted_values_sarima1), color="blue", size=1) +     # Ajuste del segundo modelo en azul
+  geom_line(aes(y=Ajuste3), color="black", size=1) +    # Ajuste del tercer modelo en verde
+  labs(title="Ajustes ARIMA y Serie Original", x="Tiempo", y="Valor") +
+  theme_minimal()
+
+
+
+
+```
+
+
+```{r SARIMA PRIMERA SERIE SELECCION MODELO}
+#auto arima
+library(forecast)
+autoarima <- auto.arima(estacionalidad_train) #ARIMA(3,0,2)(2,1,2)[12] with drift 
+modelo1 <-  Arima(estacionalidad_train, order = c(1,0,0), 
+                       seasonal = list(order = c(2,2,0), period = 12))
+prediccionesARIMA <- forecast::forecast(autoarima, h=75)
+plot(prediccionesARIMA, main="estacionalidad")
+ 
+Box.test(residuals(autoarima), type= "Ljung-Box") #>0.05 hay ruido blanco,
+checkresiduals(autoarima)
+plot(residuals(autoarima))
+acf(residuals(autoarima)) 
+shapiro.test(residuals(autoarima))
+
+
+prediccionesARIMA1 <- forecast::forecast(autoarima, h=100)
+
+plot(prediccionesARIMA, main="Pronóstico ARIMA (100 pasos)")
+library(Metrics)  # para mape()
+library(dplyr)    # para median()
+ajuste_autoarima <- fitted(autoarima)
+original <- as.numeric(estacionalidad_train)
+
+mape_autoarima <- mape(original, ajuste_autoarima)
+
+medape_autoarima <- median(abs((original - ajuste_autoarima) / original), na.rm = TRUE)
+
+cat("MAPE auto.arima:", round(mape_autoarima * 100, 2), "%\n")
+cat("MEDAPE auto.arima:", round(medape_autoarima * 100, 2), "%\n")
+
+test <- rescale(as.numeric(estacionalidad_test), to = c(0, 1))
+plot(test,type="l")
+lines(rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1)), type = "l", col="red")
+
+
+
+mape_test <- mape(test, rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1)))
+medape_test <- median(abs((test - rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1))) / test), na.rm = TRUE)
+
+cat("MAPE en test/futuro:", round(mape_test * 100, 2), "%\n")
+cat("MEDAPE en test/futuro:", round(medape_test * 100, 2), "%\n")
+
+```
+
+
+```{r ETS PRIMERA SERIE}
+library(forecast)
+library(ggplot2)
+
+# Ajuste del modelo ETS para la primera serie
+modelo_ets <- ets(estacionalidad_train)
+summary(modelo_ets)
+checkresiduals(modelo_ets)
+
+# Graficar los residuos del modelo
+plot(residuals(modelo_ets), main = "Residuos del modelo ETS - Primera Serie")
+acf(residuals(modelo_ets))
+
+# Predicción con el modelo ETS
+prediccion_ets <- forecast(modelo_ets, h = 75)
+
+# Graficar la predicción
+autoplot(prediccion_ets) +
+  ggtitle("Predicción con modelo ETS - Primera Serie") +
+  xlab("Tiempo") + ylab("Valores")
+
+# Valores ajustados (fitted values) para la primera serie
+fitted_values_ets <- fitted(modelo_ets)
+
+# Graficar la serie original junto con los valores ajustados
+df_primera_serie <- data.frame(
+  Fecha = time(estacionalidad_train),
+  Original = as.numeric(estacionalidad_train),
+  Ajustado = fitted_values_ets
+)
+
+ggplot(df_primera_serie, aes(x=Fecha)) +
+  geom_line(aes(y=Original), color="black", size=1) +   # Serie original en negro
+  geom_line(aes(y=Ajustado), color="red", size=1) +     # Valores ajustados en rojo
+  labs(title="Valores ajustados del modelo ETS - Primera Serie", x="Tiempo", y="Valor") +
+  theme_minimal()
+
+prediccion_ets1 <- forecast(modelo_ets, h = 100)
+
+
+fitted_values_ets <- fitted(modelo_ets)
+
+original_ets <- as.numeric(estacionalidad_train)
+mape_ets <- mape(original_ets, fitted_values_ets)
+medape_ets <- median(abs((original_ets - fitted_values_ets) / original_ets), na.rm = TRUE)
+
+cat("MAPE ETS:", round(mape_ets * 100, 2), "%\n")
+cat("MEDAPE ETS:", round(medape_ets * 100, 2), "%\n")
+predicciones_ets_futuro <- prediccion_ets1$mean[1:length(test)]
+predicciones_ets_escaladas <- rescale(as.numeric(predicciones_ets_futuro), to = c(0, 1))
+mape_ets_futuro <- mape(test, predicciones_ets_escaladas)
+medape_ets_futuro <- median(abs((test - predicciones_ets_escaladas) / test), na.rm = TRUE)
+
+cat("MAPE ETS en test/futuro:", round(mape_ets_futuro * 100, 2), "%\n")
+cat("MEDAPE ETS en test/futuro:", round(medape_ets_futuro * 100, 2), "%\n")
+
+```
+
+
+
+
+
+```{r XGBoost primera serie} 
+#https://www.statology.org/xgboost-in-r/
+
+library(xgboost) #for fitting the xgboost model
+library(caret)   #for general data preparation and model fitting
+
+
+x <- matrix(nrow = 99, ncol = 12)
+contador <- 12
+
+for (i in 1:99){
+  contador <- contador - 11
+  for (j in 1:12){
+     x[i, j] <- estacionalidad_train[contador]
+    contador = (contador + 1)
+  }
+}
+
+y <- matrix(nrow = 99, ncol = 1)
+contador2 = 13
+for (k in 1:99){
+     y[k, 1] <- estacionalidad_train[contador2]
+     contador2 = contador2 +1
+}
+
+
+a <- matrix(nrow = 44, ncol = 12)
+contador <- 12
+b<- matrix(nrow = 44, ncol = 1)
+contador2 = 13
+
+for (i in 1:44){
+  contador <- contador - 11
+  for (j in 1:12){
+     a[i, j] <- estacionalidad_test[contador]
+    contador = (contador + 1)
+  }
+}
+
+for (k in 1:44){
+     b[k, 1] <- estacionalidad_test[contador2]
+     contador2 = contador2 +1
+}
+
+
+
+
+
+x.train <- x
+x.test <- a
+y.train <-  y
+y.test <- b
+
+
+
+#define final training and testing sets
+xgb_train = xgb.DMatrix(data = x.train, label = y.train)
+xgb_test = xgb.DMatrix(data = x.test, label = y.test)
+
+#define watchlist
+watchlist = list(train=xgb_train, test=xgb_test)
+
+#fit XGBoost model and display training and testing data at each round
+model = xgb.train(data = xgb_train, max.depth = 3, watchlist=watchlist, nrounds = 70)
+
+
+
+#define final model
+final = xgboost(data = xgb_train, max.depth = 3, nrounds = 56, verbose = 0)
+1
+predXGBOOST = predict(final, xgb_test)
+
+plot(y.test,type = "l")
+lines(predXGBOOST, col="red")
+legend("topright", legend = c("Real", "Predicted"), col = c("black", "red"), lwd = c(2, 1), pch = c(-1, 16), cex = 0.8)
+
+
+
+```
+
+```{r valores ajustados y  predicciones serie 1 XGBOOST}
+
+
+pred_train <- predict(final, xgb_train)
+
+plot(y.train, type = "l", col = "black", lwd = 2,
+     ylab = "Valor", xlab = "Índice", main = "Valores Reales vs Ajustados (Entrenamiento)")
+lines(pred_train, col = "blue", lwd = 2, lty = 2)  # Línea discontinua
+legend("topright", legend = c("Real", "Ajustado"),
+       col = c("black", "blue"), lwd = 2, lty = c(1, 2), cex = 0.8)
+
+fitted_values_xgboost <- predict(final, xgb_train)
+
+
+forecast_horizon <- 100
+extended_predictions1 <- numeric(forecast_horizon)
+current_data <- x.train
+
+for (i in 1:forecast_horizon) {
+  dmatrix <- xgb.DMatrix(data = current_data)
+
+  next_prediction <- predict(final, newdata = dmatrix)
+  
+  extended_predictions1[i] <- next_prediction
+  
+  current_data <- rbind(current_data[-1, , drop = FALSE], next_prediction)
+}
+
+plot(1:forecast_horizon, extended_predictions1, type = "l", col = "blue",
+     main = "Predicciones Extendidas", xlab = "Periodo", ylab = "Predicción")
+
+# Calcular MAPE y MEDAPE para el conjunto de entrenamiento
+mape_xgb <- mape(y.train, pred_train)
+medape_xgb <- median(abs((y.train - pred_train) / y.train), na.rm = TRUE)
+
+# Imprimir resultados
+cat("MAPE XGBoost:", round(mape_xgb * 100, 2), "%\n")
+cat("MEDAPE XGBoost:", round(medape_xgb * 100, 2), "%\n")
+
+# Recortar las predicciones extendidas para que coincidan con la longitud de y.test (por si acaso)
+h <- length(y.test)
+predicciones_xgb_futuro <- extended_predictions1[4:47]
+
+mape_xgb_futuro <- mape(y.test, predicciones_xgb_futuro)
+medape_xgb_futuro <- median(abs((y.test - predicciones_xgb_futuro) / y.test), na.rm = TRUE)
+
+cat("MAPE XGBoost a futuro:", round(mape_xgb_futuro * 100, 2), "%\n")
+cat("MEDAPE XGBoost a futuro:", round(medape_xgb_futuro * 100, 2), "%\n")
+
+# Graficar predicciones futuras vs reales
+plot(y.test, type = "l", col = "black", lwd = 2, main = "Predicciones XGBoost a Futuro vs Real",
+     ylab = "Valor", xlab = "Índice")
+lines(predicciones_xgb_futuro, col = "blue", lwd = 2)
+legend("topright", legend = c("Real", "Predicción"), col = c("black", "blue"), lwd = 2, cex = 0.8)
+
+```
+
+```{r}
+
+min_length <- min(length(estacionalidad_train), 
+                  length(fitted_values_xgboost), 
+                  length(fitted_values_ets), 
+                  length(fitted_values_sarima1), 
+                  length(fitted_armonico))
+
+resultado_reescalado <- fitted_armonico[1:min_length] * (max(estacionalidad_train) - min(estacionalidad_train)) + min(estacionalidad_train)
+min_length <- min_length2 - 3
+estacionalidad_train <- estacionalidad_train[1:min_length ]
+fitted_values_xgboost <- fitted_values_xgboost[1:min_length]
+fitted_values_ets <- fitted_values_ets[1:min_length]
+fitted_values_sarima1 <- fitted_values_sarima1[1:min_length]
+resultado_reescalado <- resultado_reescalado[4:min_length2]
+
+x_vals <- seq(2010, by = 1/12, length.out = min_length)
+
+plot(x_vals, estacionalidad_train, type = "l", col = "black", lwd = 2, ylab = "Valores", 
+     xlab = "Observaciones", main = "Comparación de Fitted Values con Serie Original")
+
+lines(x_vals, fitted_values_xgboost, col = "blue", lwd = 2)
+lines(x_vals, fitted_values_ets, col = "red", lwd = 2)
+lines(x_vals, fitted_values_sarima1, col = "green", lwd = 2)
+lines(x_vals, resultado_reescalado, col = "purple", lwd = 2)
+
+
+
+```
+
+
+
+```{r ensamblado primera serie con norma L2}
+#estacionalidadTS acaba en mayo de 2023
+#validation empieza en diciembre de 2021
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+min_gestion <- min(estacionalidad_train)
+max_gestion <- max(estacionalidad_train)
+fourier <- pred_armonico * (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier[7:41]
+resultado_arima <- prediccionesARIMA1$mean[1:35]
+resultado_ets <- prediccion_ets1$mean[1:35]
+resultado_xgboost <- extended_predictions1[4:38]
+estacionalidad_test_numerico <-  as.numeric(estacionalidad_test[1:35])
+  
+tiempo <- time(estacionalidad_test_numerico)
+
+plot(tiempo, estacionalidad_test_numerico, type = "l", col = "black", lwd = 2,
+     ylim = c(0, 1500), xlab = "Tiempo", ylab = "Valor", 
+     main = "Comparación de Modelos vs Test",
+     xaxt = "n", yaxt = "n")
+
+axis(1, at = pretty(tiempo))  
+axis(2, at = pretty(estacionalidad_test_numerico))  
+
+lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+
+
+
+
+
+
+
+funcion <- function(x1, x2, x3, x4, x5, x6) x1*resultado_fourier + x2*resultado_arima + x3*resultado_ets + x4*resultado_xgboost + x5
+
+fr <- function(x) {   
+    x1 <- x[1]
+    x2 <- x[2]
+    x3 <- x[3]
+    x4 <- x[4]
+    x5 <- x[5]
+    sum((estacionalidad_test_numerico - ( x1*resultado_fourier + x2*resultado_arima + x3*resultado_ets + x4*resultado_xgboost + x5))^2 )
+}
+
+optimizacion <- optim(c(0,0,0,0,0), fr)
+
+
+
+resultado <- optimizacion$par[1]*resultado_fourier + optimizacion$par[2]*resultado_arima+ optimizacion$par[3]*resultado_ets+ optimizacion$par[4]*resultado_xgboost+ optimizacion$par[5]
+
+plot(resultado, type = "l", col="red")
+lines(estacionalidad_test_numerico, type = "l")
+
+# Cálculo del error absoluto porcentual para cada punto
+errores_porcentuales <- abs(estacionalidad_test_numerico - resultado) / estacionalidad_test_numerico * 100
+
+# MAPE (promedio de errores porcentuales)
+mape <- mean(errores_porcentuales, na.rm = TRUE)
+
+# MdAPE (mediana de errores porcentuales)
+mdape <- median(errores_porcentuales, na.rm = TRUE)
+
+# Mostrar resultados
+cat("MAPE en el conjunto de test:", round(mape, 2), "%\n")
+cat("MdAPE en el conjunto de test:", round(mdape, 2), "%\n")
+
+
+
+```
+
+
+
+```{r pruebas en validation serie 1 con norma L2}
+min_gestion <- min(estacionalidad_train)
+max_gestion <- max(estacionalidad_train)
+fourier <- pred_armonico * (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier
+
+resultado <- optimizacion$par[1]*fourier[57:74] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[57:74] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[57:74] + optimizacion$par[4]*extended_predictions1[57:74] + optimizacion$par[5]
+
+longitud <- length(resultado)
+x_vals <- 0:(longitud - 1)
+plot(x_vals, resultado, type = "l", col = "red", xlab = "Tiempo", ylab = "Valor", main = "Resultado vs Estacionalidad")
+lines(x_vals, estacionalidad_validation, type = "l", col = "blue")
+
+
+resultado <- optimizacion$par[1]*fourier[1:62] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[1:62] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[1:62] + optimizacion$par[4]*extended_predictions1[1:62] + optimizacion$par[5]
+
+
+estacionalidad_segment <- estacionalidadTS[124:185]
+plot(estacionalidad_segment, type = "l", col = "black", lwd = 2, 
+     main = "estacionalidadTS[124:185] vs resultado", 
+     xlab = "Tiempo", ylab = "Valor", ylim = c(-100, 1700))
+lines(resultado, col = "blue", lwd = 2, lty = 2)
+
+
+
+
+```
+
+```{r ensamblado primera serie con norma L1}
+#estacionalidadTS acaba en mayo de 2023
+#validation empieza en diciembre de 2021
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+min_gestion <- min(estacionalidad_train)
+max_gestion <- max(estacionalidad_train)
+fourier <- pred_armonico * (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier[7:41]
+resultado_arima <- prediccionesARIMA1$mean[1:35]
+resultado_ets <- prediccion_ets1$mean[1:35]
+resultado_xgboost <- extended_predictions1[4:38]
+estacionalidad_test_numerico <-  as.numeric(estacionalidad_test[1:35])
+  
+tiempo <- time(estacionalidad_test_numerico)
+
+plot(tiempo, estacionalidad_test_numerico, type = "l", col = "black", lwd = 2,
+     ylim = c(0, 1500), xlab = "Tiempo", ylab = "Valor", 
+     main = "Comparación de Modelos vs Test",
+     xaxt = "n", yaxt = "n")
+
+axis(1, at = pretty(tiempo))  
+axis(2, at = pretty(estacionalidad_test_numerico))  
+
+lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+
+legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
+       col = c("black", "red", "blue", "green", "purple"), lwd = 2)  
+
+
+
+
+
+funcion <- function(x1, x2, x3, x4, x5, x6) x1*resultado_fourier + x2*resultado_arima + x3*resultado_ets + x4*resultado_xgboost + x5
+
+fr <- function(x) {   
+    x1 <- x[1]
+    x2 <- x[2]
+    x3 <- x[3]
+    x4 <- x[4]
+    x5 <- x[5]
+    
+    pred <- x1 * resultado_fourier +
+            x2 * resultado_arima +
+            x3 * resultado_ets +
+            x4 * resultado_xgboost +
+            x5
+
+    mean(abs(estacionalidad_test_numerico - pred))  # MAE: norma L1
+}
+
+optimizacion <- optim(c(0,0,0,0,0), fr)
+
+
+
+resultado <- optimizacion$par[1]*resultado_fourier + optimizacion$par[2]*resultado_arima+ optimizacion$par[3]*resultado_ets+ optimizacion$par[4]*resultado_xgboost+ optimizacion$par[5]
+
+plot(resultado, type = "l", col="red")
+lines(estacionalidad_test_numerico, type = "l")
+
+resultado <- optimizacion$par[1]*fourier[1:62] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[1:62] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[1:62] + optimizacion$par[4]*extended_predictions1[1:62] + optimizacion$par[5]
+
+plot(estacionalidad_segment, type = "l", col = "black", lwd = 2, 
+     main = "estacionalidadTS[124:185] vs resultado", 
+     xlab = "Tiempo", ylab = "Valor", ylim = c(-100, 1700))
+lines(resultado, col = "blue", lwd = 2, lty = 2)
+
+```
+
+
+
+
+```{r pruebas en validation serie 1 con norma L1}
+min_gestion <- min(estacionalidad_train)
+max_gestion <- max(estacionalidad_train)
+fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier
+
+resultado <- optimizacion$par[1]*fourier[57:74] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[57:74] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[57:74] + optimizacion$par[4]*extended_predictions1[57:74] + optimizacion$par[5]
+
+longitud <- length(resultado)
+x_vals <- 0:(longitud - 1)
+plot(x_vals, resultado, type = "l", col = "red", xlab = "Tiempo", ylab = "Valor", main = "Resultado vs Estacionalidad")
+lines(x_vals, estacionalidad_validation, type = "l", col = "blue")
+
+
+resultado <- optimizacion$par[1]*fourier[1:62] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[1:62] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[1:62] + optimizacion$par[4]*extended_predictions1[1:62] + optimizacion$par[5]
+
+
+estacionalidad_segment <- estacionalidadTS[124:185]
+plot(estacionalidad_segment, type = "l", col = "black", lwd = 2, 
+     main = "estacionalidadTS[124:185] vs resultado", 
+     xlab = "Tiempo", ylab = "Valor", ylim = c(-100, 1700))
+lines(resultado, col = "blue", lwd = 2, lty = 2)
+
+
+
+
+```
+
+
+
+```{r comparacion de los modelos con test 1}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+#gestionenergia_test tiene una longitud de 56
+# Obtener el mínimo y máximo de gestionenergia_train para des-escalar
+min_gestion <- min(estacionalidad_train)
+max_gestion <- max(estacionalidad_train)
+fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier[7:62]
+resultado_arima <- prediccionesARIMA1$mean[1:56]
+resultado_ets <- prediccion_ets1$mean[1:56]
+resultado_xgboost <- extended_predictions1[4:59]
+estacionalidad_test_numerico <-  as.numeric(estacionalidad_test)
+
+
+
+tiempo <- time(estacionalidad_test_numerico)
+
+plot(tiempo, estacionalidad_test_numerico, type = "l", col = "black", lwd = 2,
+     ylim = c(0, 1500), xlab = "Tiempo", ylab = "Valor", 
+     main = "Comparación de Modelos vs Test",
+     xaxt = "n", yaxt = "n")
+
+axis(1, at = pretty(tiempo))  
+axis(2, at = pretty(estacionalidad_test_numerico))  
+
+lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+
+legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
+       col = c("black", "red", "blue", "green", "purple"), lwd = 2)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r fourier 2}
+library(scales)
+library(TSA)
+
+# Definir la serie de entrenamiento
+gestion_energia_2fourier <- window(gestion_energiaTS, start = c(2010, 1), end = c(2018, 2))
+serie <- as.vector(gestion_energia_2fourier)
+serie_normalizada <- rescale(serie, to = c(0, 1))
+
+# Longitud de la serie
+n <- length(serie_normalizada)
+tiempo <- 1:n
+
+# Armónicos utilizados
+harmonicos <- c(1, 8, 16, 17)
+
+# Crear la matriz X
+X <- matrix(1, nrow = n, ncol = 1 + 2 * length(harmonicos))  
+colnames(X) <- c("intercepto", paste0("cos_", harmonicos), paste0("sin_", harmonicos))
+
+# Crear los términos de coseno y seno
+for (i in seq_along(harmonicos)) {
+  freq <- harmonicos[i] / n  
+  X[, 2*i]   <- cos(2 * pi * freq * tiempo)
+  X[, 2*i+1] <- sin(2 * pi * freq * tiempo)
+}
+
+# Ajustar el modelo lineal
+modelo <- lm(serie_normalizada ~ X - 1)
+
+# Ajuste del modelo
+ajuste <- fitted(modelo)
+
+# Graficar la serie original y el ajuste
+plot(serie_normalizada, type = "l", col = "red", ylim = c(0, 1), main = "Ajuste Armónico con lm()")
+lines(ajuste, col = "blue", lwd = 2)
+
+# Calcular los errores y realizar análisis
+errores <- serie_normalizada - ajuste
+plot(errores, type = "l", col = "darkgreen", main = "Errores del modelo")
+hist(errores, breaks = 20, col = "lightblue", main = "Histograma de errores")
+shapiro.test(errores)
+Box.test(errores, lag = 20, type = "Ljung-Box")
+
+# Ajuste de un modelo ARMA(p, q) a los errores
+library(forecast)
+modelo_arma <- auto.arima(errores)  
+summary(modelo_arma)
+tsdiag(modelo_arma)
+
+# Predecir para los próximos 100 puntos (h = 100)
+h <- 100
+tiempo_futuro <- (n + 1):(n + h)
+
+# Crear la matriz X para las predicciones futuras
+X_future <- matrix(1, nrow = h, ncol = 1 + 2 * length(harmonicos))
+colnames(X_future) <- colnames(X)
+
+# Llenar los términos de coseno y seno para el futuro
+for (i in seq_along(harmonicos)) {
+  freq <- harmonicos[i] / n  
+  X_future[, 2*i]   <- cos(2 * pi * freq * tiempo_futuro)
+  X_future[, 2*i+1] <- sin(2 * pi * freq * tiempo_futuro)
+}
+
+# Realizar la predicción futura
+prediccion_futura <- predict(modelo, newdata = data.frame(X = X_future))
+
+# Graficar las predicciones futuras
+x_vals <- seq(2010, by = 1/12, length.out = length(serie_normalizada))
+
+# Graficar la serie original y las predicciones
+plot(x_vals, serie_normalizada, type = "l", col = "red", ylim = c(0, 1), main = "Predicción Armónica con lm() y h = 100")
+lines(x_vals, ajuste, col = "blue", lwd = 2)
+
+# Graficar las predicciones futuras
+x_vals_futuro <- seq(2018 + 1/12, by = 1/12, length.out = h)
+
+
+plot(prediccion_futura,type="l")
+# Cálculo del MAPE y MedAPE
+mape_fourier <- mean(abs((serie_normalizada - ajuste) / serie_normalizada)) * 100
+medape_fourier <- median(abs((serie_normalizada - ajuste) / serie_normalizada)) * 100
+
+# Mostrar resultados
+cat("MAPE (modelo armónico):", round(mape_fourier, 2), "%\n")
+cat("MedAPE (modelo armónico):", round(medape_fourier, 2), "%\n")
+
+serie_test_normalizada <- rescale(as.numeric(gestionenergia_test), to = c(0, 1))
+plot(serie_test_normalizada,type="l")
+lines(prediccion_futura[9:(length(serie_test_normalizada)+8)],col="red")
+
+
+mape_test_fourier <- mean(abs((serie_test_normalizada - prediccion_futura[9:(length(serie_test_normalizada) + 8)]) / serie_test_normalizada)) * 100
+medape_test_fourier <- median(abs((serie_test_normalizada - prediccion_futura[9:(length(serie_test_normalizada) + 8)]) / serie_test_normalizada)) * 100
+
+
+# Mostrar resultados test
+cat("MAPE test (modelo armónico):", round(mape_test_fourier, 2), "%\n")
+cat("MedAPE test (modelo armónico):", round(medape_test_fourier, 2), "%\n")
+
+
+```
+
+
+
+
+
+
+
+
+```{r}
+# Cargar librerías necesarias
+library(ggplot2)
+library(tseries)
+fs <- 1000  
+t_total <- 2  
+t <- seq(0, t_total, by = 1/fs)  
+f1 <- 5  # Frecuencia inicial (5 Hz)
+f2 <- 20 
+
+señal <- c(sin(2 * pi * f1 * t[t <= 1]), sin(2 * pi * f2 * t[t > 1]))
+
+plot(t, señal, type = 'l', col = 'blue', xlab = 'Tiempo (s)', ylab = 'Amplitud', main = 'Señal con dos frecuencias')
+
+fft_señal <- fft(señal)
+frecuencias <- seq(0, fs, length.out = length(fft_señal))
+magnitudes <- Mod(fft_señal)
+plot(frecuencias[1:(length(frecuencias)/2)], magnitudes[1:(length(magnitudes)/2)], type = 'l', col = 'red', 
+     xlab = 'Frecuencia (Hz)', ylab = 'Magnitud', main = 'Espectro de Frecuencias de la Señal')
+adf_result <- adf.test(señal)
+print(adf_result)
+```
+
+
+
+
+
+
+```{r PERIODOGRAMA PARA NUESTRAS SERIES}
+
+spectrum(estacionalidadTS, log = "no", main = "Periodograma")
+
+spectrum(gestion_energiaTS, log = "no", main = "Periodograma")
+
+# freq = 1 / T
+# para la primera serie hay un componente ciclico que se repite cada unidad de tiempo
+#para la segunda serie hay T = 1/2 Y 1/3
+
+decompose(estacionalidadTS)
+plot(decompose(estacionalidadTS))
+
+descomposicion <- decompose(gestion_energiaTS)
+plot(decompose(gestion_energiaTS))
+
+gestion_energia_SIN_ALEATORIEDAD <- gestion_energiaTS - descomposicion$random
+
+plot(gestion_energia_SIN_ALEATORIEDAD, type="l")
+
+
+```
+
+
+
+
+
+```{r HOMOCEDASTICIDAD}
+# Instalar y cargar el paquete necesario
+install.packages("lmtest")
+library(lmtest)
+
+tiempo <- seq_along(estacionalidadTS)
+
+modelo <- lm(estacionalidadTS ~ tiempo)
+
+bptest(modelo)
+tiempo <- seq_along(gestion_energiaTS)
+modelo <- lm(gestion_energiaTS ~ tiempo)
+bptest(modelo)
+
+
+```
+
+
+
+```{r estacionariedad en media }
+#install.packages("tseries")
+library(tseries)
+adf.test(estacionalidadTS)
+adf.test(gestion_energiaTS)
+```
+
+
+```{r estacionalidad}
+spec.pgram(estacionalidadTS, log = "no")
+spec.pgram(gestion_energiaTS, log = "no")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+```{r librerias }
+desc_aditiva <- decompose(estacionalidad_train, type="additive")
+desc_multiplicativa <- decompose(estacionalidad_train, type="multiplicative")
+plot(desc_aditiva)
+plot(desc_multiplicativa)
+
+library(quantmod)
+library(tseries)
+library(forecast)
+
+
+```
+
+
+granger causality or granger prediction because it not requires causal interactions, is better to use granger predictions. 
+
+H0: time series x does not granger causality y
+H1: time series x does granger causality y
+
+order es el número de lags por usar 
+
+
+
+
+```{r SARIMA}
+
+library(tseries)
+
+adf.test(estacionalidadTS)
+adf.test(estacionalidad_train)
+acf(estacionalidad_train)#ma
+pacf(estacionalidad_train)#ma
+
+
+
+```
+
+
+
+
+
+```{r}
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(0,0,0), 
+              seasonal = list(order = c(0,0,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(0,0,0), 
+              seasonal = list(order = c(1,0,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(1,0,1), 
+              seasonal = list(order = c(2,1,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(0,0,0), 
+              seasonal = list(order = c(2,2,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(1,0,0), 
+              seasonal = list(order = c(2,2,0), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+
+library(forecast)
+
+fit3 <- Arima(gestionenergia_train, 
+              order = c(1,0,6), 
+              seasonal = list(order = c(2,2,1), period = 12),
+              lambda = NULL)
+
+tsdisplay(residuals(fit3), lag.max = 36)
+
+
+```
+
+
+
+```{r}
+library(forecast)
+seasonplot(estacionalidad_train,
+           main = "Seasonal Plot",
+           ylab = "Valor",
+           xlab = "Mes",
+           col = rainbow(12),
+           year.labels = TRUE,   
+           year.labels.left = TRUE, 
+           cex = 0.8) 
+
+library(forecast)
+seasonplot(gestionenergia_train,
+           main = "Seasonal Plot",
+           ylab = "Valor",
+           xlab = "Mes",
+           col = rainbow(12),
+           year.labels = TRUE,   
+           year.labels.left = TRUE, 
+           cex = 0.8) 
+
+promedio_estacional <- aggregate(gestionenergia_train, FUN=mean)
+plot(promedio_estacional)
+
+
+```
+
+```{r}
+
+library(forecast)
+library(tseries)
+library(ggplot2)
+residuos <- residuals(autoarima)
+autoplot(residuos) + ggtitle("Residuos del modelo SARIMA")
+par(mfrow=c(1,2)) 
+hist(residuos, main="Histograma de residuos", col="lightblue", breaks=20)
+qqnorm(residuos); qqline(residuos, col="red")
+shapiro.test(residuos)  # Shapiro-Wilk
+jarque.bera.test(residuos)  # Jarque-Bera
+
+acf(residuos, main="Autocorrelación de los residuos")
+Box.test(residuos, type="Ljung-Box", lag=log(length(residuos))) 
+plot(residuos ~ time(residuos), main="Comprobación de homocedasticidad")
+abline(h=0, col="red")
+
+install.packages("FinTS")  # Si no lo tienes instalado
+library(FinTS)
+library(tseries)
+ArchTest(residuos)
+
+```
+
+
+
+
+
+```{r SARIMA SEGUNDA SERIE}
+
+library(tseries)
+library(forecast)
+
+adf.test(gestionenergia_train)
+adf.test(gestionenergia_train)
+acf(gestionenergia_train)#ma
+pacf(gestionenergia_train)#ma
+
+autoarima_segundaserie <- auto.arima(gestionenergia_train)
+
+
+fitted_values_arima2 <- fitted(autoarima_segundaserie)
+
+
+plot(gestionenergia_train, type = "l", col = "blue", lwd = 2, ylab = "Valores", main = "Ajuste del Modelo SARIMA")
+lines(fitted_values_arima2, col = "red", lwd = 2)
+legend("topleft", legend = c("Valores reales", "Valores ajustados"), col = c("blue", "red"), lty = 1, lwd = 2)
+
+forecast_arima2 <- forecast(autoarima_segundaserie, h = 100)
+
+plot(residuals(autoarima_segundaserie))
+checkresiduals(autoarima_segundaserie)
+# Cálculo del MAPE y MEDAPE
+errores <- gestionenergia_train - fitted_values_arima2
+porcentajes_error <- abs(errores / gestionenergia_train) * 100
+
+# MAPE: error porcentual absoluto medio
+mape <- mean(porcentajes_error, na.rm = TRUE)
+
+# MEDAPE: error porcentual absoluto mediano
+medape <- median(porcentajes_error, na.rm = TRUE)
+
+# Mostrar resultados
+cat("MAPE:", round(mape, 2), "%\n")
+cat("MEDAPE:", round(medape, 2), "%\n")
+
+predicciones_test_arima <- forecast_arima2$mean[1:length(gestionenergia_test)]
+
+
+errores_test_arima <- gestionenergia_test - predicciones_test_arima
+porcentajes_error_test <- abs(errores_test_arima / gestionenergia_test) * 100
+
+mape_test_arima <- mean(porcentajes_error_test, na.rm = TRUE)
+medape_test_arima <- median(porcentajes_error_test, na.rm = TRUE)
+
+cat("MAPE (SARIMA - test):", round(mape_test_arima, 2), "%\n")
+cat("MEDAPE (SARIMA - test):", round(medape_test_arima, 2), "%\n")
+
+```
+
+```{r valores ajustados 2 serie}
+
+library(forecast)
+library(ggplot2)
+modelo4 <- Arima(gestionenergia_train, order=c(0,1,2), seasonal=c(0,1,1))
+modelo5 <- Arima(gestionenergia_train, order=c(1,0,6), seasonal=c(2,2,1))
+ajuste4 <- fitted(modelo4)
+ajuste5 <- fitted(modelo5)
+
+df <- data.frame(
+  Fecha = time(gestionenergia_train),
+  Original = as.numeric(gestionenergia_train),
+  Ajuste4 = ajuste4,
+  Ajuste5 = ajuste5
+)
+
+# Graficar usando ggplot2
+ggplot(df, aes(x=Fecha)) +
+  geom_line(aes(y=Original), color="black", size=1) +   # Serie original en negro
+  geom_line(aes(y=Ajuste4), color="green", size=1) +    # Ajuste del modelo ARIMA(0,1,2)(0,1,1)[12] en púrpura
+  geom_line(aes(y=Ajuste5), color="red", size=1) +   # Ajuste del modelo ARIMA(1,0,6)(2,2,1) en naranja
+  labs(title="Ajustes ARIMA y Serie Original", x="Tiempo", y="Valor") +
+  theme_minimal()
+
+```
+
+
+
+
+
+
+
+```{r ETS Segunda SERIE}
+library(forecast)
+
+modelo_ets_segundaserie <- ets(gestionenergia_train)
+summary(modelo_ets_segundaserie)
+checkresiduals(modelo_ets_segundaserie)
+
+plot(residuals(modelo_ets_segundaserie), main = "Residuos del modelo ETS - Segunda Serie")
+acf(residuals(modelo_ets_segundaserie))
+
+
+
+
+fitted_values_ets2 <- fitted(modelo_ets_segundaserie)
+
+df_segunda_serie <- data.frame(
+  Fecha = time(gestionenergia_train),
+  Original = as.numeric(gestionenergia_train),
+  Ajustado = fitted_values_ets2
+)
+
+ggplot(df_segunda_serie, aes(x=Fecha)) +
+  geom_line(aes(y=Original), color="black", size=1) +   # Serie original en negro
+  geom_line(aes(y=Ajustado), color="red", size=1) +    # Valores ajustados en azul
+  labs(title="Valores ajustados del modelo ETS - Segunda Serie", x="Tiempo", y="Valor") +
+  theme_minimal()
+
+prediccion_ets_segundaserie <- forecast(modelo_ets_segundaserie, h = 100)
+
+#autoplot(prediccion_ets_segundaserie) +
+#  ggtitle("Predicción con modelo ETS - Segunda Serie") +
+#  xlab("Tiempo") + ylab("Valores")
+
+# Cálculo del MAPE y MedAPE
+mape_ets2 <- mean(abs((gestionenergia_train - fitted_values_ets2) / gestionenergia_train)) * 100
+medape_ets2 <- median(abs((gestionenergia_train - fitted_values_ets2) / gestionenergia_train)) * 100
+
+# Mostrar métricas
+cat("MAPE (ETS Segunda Serie):", round(mape_ets2, 2), "%\n")
+cat("MedAPE (ETS Segunda Serie):", round(medape_ets2, 2), "%\n")
+
+predicciones_test_ets <- prediccion_ets_segundaserie$mean[1:length(gestionenergia_test)]
+
+# Calcular los errores
+errores_test_ets <- gestionenergia_test - predicciones_test_ets
+porcentajes_error_test_ets <- abs(errores_test_ets / gestionenergia_test) * 100
+
+# Calcular MAPE y MedAPE para el conjunto de prueba
+mape_test_ets <- mean(porcentajes_error_test_ets, na.rm = TRUE)
+medape_test_ets <- median(porcentajes_error_test_ets, na.rm = TRUE)
+
+# Mostrar resultados
+cat("MAPE (ETS - Test):", round(mape_test_ets, 2), "%\n")
+cat("MedAPE (ETS - Test):", round(medape_test_ets, 2), "%\n")
+
+
+```
+
+```{r}
+
+library(forecast)
+library(tseries)
+
+
+residuos <- residuals(modelo_ets_segundaserie)
+
+ts.plot(residuos, main = "Residuos del modelo ETS", ylab = "Residuos", col = "blue")
+
+acf(residuos, main = "Función de Autocorrelación de los Residuos")
+Box.test(residuos, lag = 20, type = "Ljung-Box")  
+hist(residuos, main = "Histograma de Residuos", col = "lightblue", breaks = 10)
+qqnorm(residuos)
+qqline(residuos, col = "red")
+shapiro.test(residuos)  
+
+plot(fitted(modelo_ets_segundaserie), residuos, main = "Residuos vs Valores Ajustados",
+     xlab = "Valores Ajustados", ylab = "Residuos")
+abline(h = 0, col = "red")
+
+install.packages("lmtest") 
+#library(lmtest)
+#bptest(lm(residuos ~ fitted(ets_model)))  
+
+
+```
+
+
+
+
+
+
+
+
+
+
+```{r XGBoost segunda serie} 
+#https://www.statology.org/xgboost-in-r/
+
+library(xgboost) #for fitting the xgboost model
+library(caret)   #for general data preparation and model fitting
+
+
+x <- matrix(nrow = 173, ncol = 12)
+contador <- 12
+
+for (i in 1:173){
+  contador <- contador - 11
+  for (j in 1:12){
+     x[i, j] <- gestionenergia_train[contador]
+    contador = (contador + 1)
+  }
+}
+
+y <- matrix(nrow = 173, ncol = 1)
+contador2 = 13
+for (k in 1:173){
+     y[k, 1] <- gestionenergia_train[contador2]
+     contador2 = contador2 +1
+}
+
+
+a <- matrix(nrow = 44, ncol = 12)
+contador <- 12
+b<- matrix(nrow = 44, ncol = 1)
+contador2 = 13
+
+for (i in 1:44){
+  contador <- contador - 11
+  for (j in 1:12){
+     a[i, j] <- gestionenergia_test[contador]
+    contador = (contador + 1)
+  }
+}
+
+for (k in 1:44){
+     b[k, 1] <- gestionenergia_test[contador2]
+     contador2 = contador2 +1
+}
+
+
+
+
+
+x.train <- head(x, 80)
+x.test<- head(a,18)
+y.train<-  head(y, 80)
+y.test <- head(b,18)
+
+xgb_train = xgb.DMatrix(data = x.train, label = y.train)
+xgb_test = xgb.DMatrix(data = x.test, label = y.test)
+
+watchlist = list(train=xgb_train, test=xgb_test)
+
+model = xgb.train(data = xgb_train, max.depth = 3, watchlist=watchlist, nrounds = 70)
+
+
+final = xgboost(data = xgb_train, max.depth = 3, nrounds = 56, verbose = 0)
+
+predXGBOOST = predict(final, xgb_test)
+
+plot(y.test,type = "l")
+lines(predXGBOOST, col="red")
+legend("topright", legend = c("Real", "Predicted"), col = c("black", "red"), lwd = c(2, 1), pch = c(-1, 16), cex = 0.8)
+
+mape <- mean(abs((y.test - predXGBOOST) / y.test)) * 100
+medape <- median(abs((y.test - predXGBOOST) / y.test)) * 100
+
+# Mostrar resultados
+cat("MAPE:", round(mape, 2), "%\n")
+cat("MedAPE:", round(medape, 2), "%\n")
+
+```
+```{r}
+
+
+library(glmnet)
+library(CVXR)
+library(tidyr)
+library(ggplot2)
+
+set.seed(123)
+
+# Simulación de datos
+n <- 100
+p <- 10
+X <- matrix(rnorm(n*p), n, p)
+beta_true <- c(2, -3, 0, 0, 5, rep(0, p-5))
+y <- X %*% beta_true + rnorm(n)
+
+# Ajuste Ridge (L2)
+ridge_mod <- cv.glmnet(X, y, alpha=0)
+beta_ridge <- as.vector(coef(ridge_mod, s = "lambda.min"))[-1]
+y_pred_ridge <- X %*% beta_ridge
+
+# Ajuste Lasso (L1)
+lasso_mod <- cv.glmnet(X, y, alpha=1)
+beta_lasso <- as.vector(coef(lasso_mod, s = "lambda.min"))[-1]
+y_pred_lasso <- X %*% beta_lasso
+
+# Ajuste L∞ con CVXR
+beta <- Variable(p)
+lambda <- 10
+objective <- Minimize(0.5 * sum_squares(y - X %*% beta) + lambda * p_norm(beta, "inf"))
+problem <- Problem(objective)
+result <- solve(problem)
+beta_linf <- result$getValue(beta)
+y_pred_linf <- X %*% beta_linf
+
+# Crear dataframe para graficar valores ajustados
+df_plot <- data.frame(
+  Índice = 1:n,
+  Original = as.vector(y),
+  Ridge = as.vector(y_pred_ridge),
+  Lasso = as.vector(y_pred_lasso),
+  Linf = as.vector(y_pred_linf)
+)
+
+# Pasar a formato largo para ggplot
+df_long <- pivot_longer(df_plot, cols = c("Original", "Ridge", "Lasso", "Linf"),
+                        names_to = "Modelo", values_to = "Valor")
+
+ggplot(df_long, aes(x = Índice, y = Valor, color = Modelo)) +
+  geom_line(size = 1) +
+  scale_color_manual(values = c(
+    "Original" = "black",
+    "Ridge" = "red",
+    "Lasso" = "blue",
+    "Linf" = "green"
+  )) +
+  labs(title = "Comparación de valores originales y ajustados por distintos modelos",
+       y = "Valor",
+       x = "Índice de muestra") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+```
+
+```{r}
+ggplot(df_long, aes(x = Índice, y = Valor, color = Modelo)) +
+  geom_line(size = 1) +
+  scale_color_manual(values = c(
+    "Original" = "black",
+    "Ridge" = "red",
+    "Lasso" = "blue",
+    "Linf" = "green"
+  )) +
+  facet_wrap(~ Modelo, ncol = 1, scales = "free_y") +  # 1 columna, cada fila un modelo
+  labs(title = "Valores originales y ajustados separados por modelo",
+       y = "Valor",
+       x = "Índice de muestra") +
+  theme_minimal() +
+  theme(legend.position = "none")  # ocultamos leyenda porque ya cada gráfico es un modelo
+# Calcular residuos (errores)
+residuals_ridge <- as.vector(y) - as.vector(y_pred_ridge)
+residuals_lasso <- as.vector(y) - as.vector(y_pred_lasso)
+residuals_linf <- as.vector(y) - as.vector(y_pred_linf)
+
+# Funciones para métricas
+mse <- function(res) mean(res^2)
+mae <- function(res) mean(abs(res))
+std_res <- function(res) sd(res)
+mean_res <- function(res) mean(res)
+
+# Crear tabla con resultados
+metrics <- data.frame(
+  Modelo = c("Ridge", "Lasso", "Linf"),
+  MSE = c(mse(residuals_ridge), mse(residuals_lasso), mse(residuals_linf)),
+  MAE = c(mae(residuals_ridge), mae(residuals_lasso), mae(residuals_linf)),
+  Std_Resid = c(std_res(residuals_ridge), std_res(residuals_lasso), std_res(residuals_linf)),
+  Mean_Resid = c(mean_res(residuals_ridge), mean_res(residuals_lasso), mean_res(residuals_linf))
+)
+
+print(metrics)
+```
+
+```{r}
+# Obtener los fitted values del TRAIN
+fitted_values_xgboost2 <- predict(final, xgb_train)
+plot(y.train, type = "l", col = "black", lwd = 2, ylab = "Valores", xlab = "Observaciones", main = "Valores Reales vs. Fitted (Train)")
+lines(fitted_values_xgboost2, col = "blue", lwd = 2)
+legend("topright", legend = c("Real", "Fitted"), col = c("black", "blue"), lwd = 2, cex = 0.8)
+```
+
+
+```{r prediccion xgboost segunda serie}
+
+forecast_horizon <- 150
+extended_predictions <- numeric(forecast_horizon)
+current_data <- x.train
+
+for (i in 1:forecast_horizon) {
+  dmatrix <- xgb.DMatrix(data = current_data)
+
+  next_prediction <- predict(final, newdata = dmatrix)
+  
+  extended_predictions[i] <- next_prediction
+  
+  current_data <- rbind(current_data[-1, , drop = FALSE], next_prediction)
+}
+
+plot(1:forecast_horizon, extended_predictions, type = "l", col = "blue",
+     main = "Predicciones Extendidas", xlab = "Periodo", ylab = "Predicción")
+
+# Asegúrate de alinear longitudes
+reales <- gestionenergia_test[1:forecast_horizon]
+predichos <- extended_predictions[1:forecast_horizon]
+
+# Calcular errores porcentuales absolutos
+errores_porcentuales <- abs((reales - predichos) / reales) * 100
+
+# MAPE y MedAPE
+mape_xgboost <- mean(errores_porcentuales, na.rm = TRUE)
+medape_xgboost <- median(errores_porcentuales, na.rm = TRUE)
+
+# Mostrar resultados
+cat("MAPE (XGBoost):", round(mape_xgboost, 2), "%\n")
+cat("MedAPE (XGBoost):", round(medape_xgboost, 2), "%\n")
+
+```
+
+
+
+
+```{r}
+forecast_horizon <- 200
+
+extended_predictions <- numeric(forecast_horizon)
+
+current_data <- x.train
+
+for (i in 1:forecast_horizon) {
+  dmatrix <- xgb.DMatrix(data = current_data)
+  
+  next_prediction <- predict(final, newdata = dmatrix)
+  
+  extended_predictions[i] <- next_prediction
+  
+  current_data <- rbind(current_data[-1, , drop = FALSE], next_prediction)
+}
+
+plot(1:forecast_horizon, extended_predictions, type = "l", col = "blue",
+     main = "Predicciones Extendidas", xlab = "Periodo", ylab = "Predicción")
+
+fitted_values_xgboost2 <- predict(final, xgb_train)
+
+plot(gestionenergia_train, type = "l", col = "blue", lwd = 2, ylab = "Valores", main = "Ajuste del Modelo XGBoost")
+#lines(fitted_values, col = "red", lwd = 2)
+#legend("topleft", legend = c("Valores reales", "Valores ajustados"), col = c("blue", "red"), lty = 1, lwd = 2)
+
+
+
+```
+
+
+
+
+```{r}
+
+
+
+# Obtener el mínimo y máximo de gestionenergia_train
+min_gestion <- min(gestionenergia_train)
+max_gestion <- max(gestionenergia_train)
+
+# Reescalar resultado al rango original de gestionenergia_train
+fourier <- prediccion_futura * (max_gestion - min_gestion) + min_gestion
+
+
+# Crear el eje X ajustado, asumiendo que 2010 es el primer año de la serie
+x_vals <- seq(2010, by = 1/12, length.out = length(fourier))
+
+# Graficar la serie original
+plot(gestionenergia_train, type = "l", col = "black", lwd = 2, ylab = "Valores", 
+     xlab = "Año", main = "Comparación de Fitted Values con Serie Original")
+
+# Agregar las líneas de los modelos
+lines(fitted_values_xgboost2, col = "blue", lwd = 2)
+lines(fitted_values_ets2, col = "red", lwd = 2)
+lines(fitted_values_arima2, col = "green", lwd = 2)
+
+# Agregar la nueva serie desplazada en el tiempo
+lines(x_vals, fourier, col = "purple", lwd = 2)
+
+
+```
+
+
+
+
+```{r ensamblado segunda serie}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+#gestionenergia_test tiene una longitud de 46
+# Obtener el mínimo y máximo de gestionenergia_train
+min_gestion <- min(gestionenergia_train)
+max_gestion <- max(gestionenergia_train)
+fourier <- prediccion_futura* (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier[9:38] 
+resultado_arima <- forecast_arima2$mean[1:30]
+resultado_ets <- prediccion_ets_segundaserie$mean[1:30]
+resultado_xgboost <- extended_predictions[101:130]
+gestionenergia_test <- gestionenergia_test[1:30] # 30 valores
+
+
+tiempo <- 0:(length(gestionenergia_test) - 1)
+
+plot(tiempo, gestionenergia_test, type = "l", col = "black", lwd = 2, 
+     ylim = c(0, 8), xlab = "Tiempo", ylab = "Valor", 
+     main = "Comparación de Modelos vs Test")
+
+lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+
+
+funcion <- function(x1, x2, x3, x4, x5) x1*resultado_fourier + x2*resultado_arima + x3*resultado_ets + x4*resultado_xgboost + x5
+
+fr <- function(x) {   
+    x1 <- x[1]
+    x2 <- x[2]
+    x3 <- x[3]
+    x4 <- x[4]
+    x5 <- x[5]
+    sum((gestionenergia_test - ( x1*resultado_fourier + x2*resultado_arima + x3*resultado_ets + x4*resultado_xgboost + x5))^2 )
+}
+
+optimizacion <- optim(c(0,0,0,0,0), fr)
+
+
+
+resultado <- optimizacion$par[1]*resultado_fourier + optimizacion$par[2]*resultado_arima+ optimizacion$par[3]*resultado_ets+ optimizacion$par[4]*resultado_xgboost+ optimizacion$par[5]
+
+plot(resultado, type = "l", col = "red", ylim = c(2, max(c(resultado, gestionenergia_test))))
+lines(gestionenergia_test, type = "l")
+
+
+# Cálculo de MAPE y MdAPE
+mape_test <- mean(abs((gestionenergia_test - resultado) / gestionenergia_test)) * 100
+mdape_test <- median(abs((gestionenergia_test - resultado) / gestionenergia_test)) * 100
+
+mape_test
+mdape_test
+
+
+
+```
+
+
+```{r pruebas en validation serie 2}
+
+min_gestion <- min(gestionenergia_train)
+max_gestion <- max(gestionenergia_train)
+fourier <- fourier* (max_gestion - min_gestion) + min_gestion
+resultado_fourier <- fourier
+
+resultado <- optimizacion$par[1]*resultado_fourier[34:48] + optimizacion$par[2]*forecast_arima2$mean[34:48]+ 
+optimizacion$par[3]*prediccion_ets_segundaserie$mean[34:48] + optimizacion$par[4]*extended_predictions[34:48] +
+optimizacion$par[5]
+
+
+
+plot(x = 0:(length(resultado)-1), y = resultado, type = "l", ylim = c(2, 9))
+lines(x = 0:(length(gestionenergia_validation)-1), y = gestionenergia_validation, col = "red")
+
+
+resultado_expanded <- optimizacion$par[1] * resultado_fourier[1:62] +
+                      optimizacion$par[2] * forecast_arima2$mean[1:62] +
+                      optimizacion$par[3] * prediccion_ets_segundaserie$mean[1:62] +
+                      optimizacion$par[4] * extended_predictions[1:62] +
+                      optimizacion$par[5]
+
+
+real_segment <- gestion_energiaTS[93:152]
+plot(real_segment, type="l")
+lines(resultado_expanded, col = "blue", lwd = 2, lty = 2)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+```{r comparacion de los modelos con test 2}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+#gestionenergia_test tiene una longitud de 46
+# Obtener el mínimo y máximo de gestionenergia_train
+min_gestion <- min(gestionenergia_train)
+max_gestion <- max(gestionenergia_train)
+fourier <- prediccion_futura* (max_gestion - min_gestion) + min_gestion
+
+resultado_fourier <- fourier[3:48] 
+resultado_arima <- forecast_arima2$mean[1:46]
+resultado_ets <- prediccion_ets_segundaserie$mean[1:46]
+resultado_xgboost <- extended_predictions[93:138]
+gestionenergia_test <- gestionenergia_test 
+
+
+tiempo <- 0:(length(gestionenergia_test) - 1)
+
+plot(tiempo, gestionenergia_test, type = "l", col = "black", lwd = 2, 
+     ylim = c(0, 8), xlab = "Tiempo", ylab = "Valor", 
+     main = "Comparación de Modelos vs Test")
+
+lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+
+legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
+       col = c("black", "red", "blue", "green", "purple"), lwd = 2)
+
+```
+```{r regresión penalizada bajo diferentes normas Lp}
+# Datos
+y <- c(
+  2498560, 4055040, 4169728, 4636672, 4284416, 3661824, 4005888, 3768320, 4448256,
+  3900000, 4100000, 7000000, 4050000, 4087808, 4317184, 4554752, 3842048, 3866624, 4268032,
+  4481024, 4235264, 3989504, 8000000, 4759552, 4554752, 3555328, 4784128, 4390912, 3973120,
+  4251648, 4030464, 4276224, 3956736, 8500000, 4505600, 4153344, 4595712, 4000000, 3800000, 
+  3700000, 3600000, 4571136, 4145152, 4792320, 3579904, 7000000, 3883008, 3700000, 3600000, 
+  3400000, 3300000, 3100000, 3000000
+)
+
+x <- 1:length(y)
+
+# Función general de ajuste no lineal con norma Lp
+fit_nonlinear_lp <- function(p) {
+  loss <- function(par) {
+    a0 <- par[1]; a1 <- par[2]; a2 <- par[3]
+    a3 <- par[4]; a4 <- par[5]; w  <- par[6]
+    y_hat <- a0 + a1*x + a2*x^2 + a3*sin(w*x) + a4*cos(w*x)
+    if (is.infinite(p)) {
+      return(max(abs(y - y_hat)))  # L∞
+    } else {
+      return(sum(abs(y - y_hat)^p))
+    }
+  }
+  
+  init <- c(mean(y), 0, 0, 0, 0, 0.1)
+  result <- optim(init, loss, method = "BFGS")
+  y_hat <- result$par[1] + result$par[2]*x + result$par[3]*x^2 +
+           result$par[4]*sin(result$par[6]*x) + result$par[5]*cos(result$par[6]*x)
+  return(list(params = result$par, y_hat = y_hat))
+}
+
+# Ajustar modelos
+ps <- c(1, 2, 3, 4, Inf)
+modelos <- lapply(ps, fit_nonlinear_lp)
+
+# Crear matriz con todas las predicciones
+y_hats <- sapply(modelos, function(m) m$y_hat)
+
+# Ensamblado: media aritmética
+ensemble <- rowMeans(y_hats)
+
+# === PLOT 1: Modelos individuales ===
+cols <- c("red", "blue", "green", "purple", "orange")
+nombres <- c("L1", "L2", "L3", "L4", "L_infinito")
+
+plot(x, y, type="l", col="black", lwd=2,
+     main="Modelos no lineales individuales (normas Lp)",
+     xlab="x", ylab="y")
+
+for (i in seq_along(modelos)) {
+  lines(x, modelos[[i]]$y_hat, col = cols[i], lwd = 2, lty = 2)
+}
+
+legend("topleft", legend = c("Datos reales", nombres),
+       col = c("black", cols), lwd = 2, lty = c(1, rep(2, length(cols))))
+
+# === PLOT 2: Ensamblado ===
+plot(x, y, type="l", col="black", lwd=2,
+     main="Ensamblado de modelos Lp (media)", xlab="x", ylab="y")
+
+lines(x, ensemble, col = "darkgoldenrod", lwd = 3)
+legend("topleft", legend = c("Datos reales", "Ensamblado (media)"),
+       col = c("black", "darkgoldenrod"), lwd = c(2, 3), lty = 1)
+
+
+
+```
+
+
+
+```{r}
+# Datos
+y <- c(
+  2498560, 4055040, 4169728, 4636672, 4284416, 3661824, 4005888, 3768320, 4448256,
+  3900000, 4100000, 7000000, 4050000, 4087808, 4317184, 4554752, 3842048, 3866624, 4268032,
+  4481024, 4235264, 3989504, 8000000, 4759552, 4554752, 3555328, 4784128, 4390912, 3973120,
+  4251648, 4030464, 4276224, 3956736, 8500000, 4505600, 4153344, 4595712, 4000000, 3800000, 
+  3700000, 3600000, 4571136, 4145152, 4792320, 3579904, 7000000, 3883008, 3700000, 3600000, 
+  3400000, 3300000, 3100000, 3000000
+)
+
+x <- 1:length(y)
+
+# Función general de ajuste no lineal con norma Lp
+fit_nonlinear_lp <- function(p) {
+  loss <- function(par) {
+    a0 <- par[1]; a1 <- par[2]; a2 <- par[3]
+    a3 <- par[4]; a4 <- par[5]; w  <- par[6]
+    y_hat <- a0 + a1*x + a2*x^2 + a3*sin(w*x) + a4*cos(w*x)
+    if (is.infinite(p)) {
+      return(max(abs(y - y_hat)))  # L∞
+    } else {
+      return(sum(abs(y - y_hat)^p))
+    }
+  }
+  
+  init <- c(mean(y), 0, 0, 0, 0, 0.1)
+  result <- optim(init, loss, method = "BFGS")
+  y_hat <- result$par[1] + result$par[2]*x + result$par[3]*x^2 +
+           result$par[4]*sin(result$par[6]*x) + result$par[5]*cos(result$par[6]*x)
+  return(list(params = result$par, y_hat = y_hat))
+}
+
+# Lista ampliada de normas
+ps <- c(1, 2, 3, 4, 5, 10, 15, 20, Inf)
+modelos <- lapply(ps, fit_nonlinear_lp)
+
+# Recolectar predicciones
+y_hats <- sapply(modelos, function(m) m$y_hat)
+
+# Ensamblado: media
+ensemble_mean <- rowMeans(y_hats)
+
+# Ensamblado: mediana
+ensemble_median <- apply(y_hats, 1, median)
+
+# === Plot: ensamblados por separado ===
+par(mfrow = c(2, 1))
+
+# Ensamblado por mediana
+plot(x, y, type="l", col="black", lwd=2,
+     main="Ensamblado (mediana de normas Lp)", xlab="x", ylab="y")
+lines(x, ensemble_median, col = "blue", lwd = 3)
+legend("topleft", legend = c("Datos reales", "Mediana Lp"), col = c("black", "blue"), lwd = c(2, 3))
+
+```
+
+
+
