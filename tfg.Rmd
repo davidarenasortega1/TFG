@@ -332,6 +332,275 @@ print(gestion_energia_ordenada)
 
 ```
 
+```{r}
+library(quantmod)
+library(forecast)
+library(tidyverse)
+library(quantmod)
+getSymbols("AAPL", from = "2020-01-01", to = "2024-01-01")
+data <- Cl(AAPL)  
+data <- na.omit(data)
+ts_data <- as.numeric(data[1:100])
+
+end_point <- 100  
+window_starts <- c(50, 60, 70, 80, 90)  # Ej: ventanas [50:100], [60:100], etc.
+
+predicciones <- c()
+model_names <- c()
+
+for (start in window_starts) {
+  window_data <- ts_data[start:end_point]
+  ts_window <- ts(window_data)
+
+  fit_arima <- auto.arima(ts_window)
+  pred_arima <- forecast(fit_arima, h = 1)$mean[1]
+
+  fit_ets <- ets(ts_window)
+  pred_ets <- forecast(fit_ets, h = 1)$mean[1]
+
+  predicciones <- rbind(predicciones, c(pred_arima, pred_ets))
+  model_names <- c(model_names, paste0("Window_", start, "_", end_point))
+}
+
+colnames(predicciones) <- c("ARIMA", "ETS")
+rownames(predicciones) <- model_names
+
+pesos <- c(0.5, 0.5)  # Igual peso para ARIMA y ETS
+
+pred_ensemble_por_ventana <- apply(predicciones, 1, function(x) sum(x * pesos))
+
+pred_final <- mean(pred_ensemble_por_ventana)
+
+# Resultados
+print("Predicciones por modelo y ventana:")
+print(round(predicciones, 2))
+print("Predicciones ensambladas por ventana:")
+print(round(pred_ensemble_por_ventana, 2))
+cat("Predicción final ensamblada para t+1:", round(pred_final, 2), "\n")
+
+```
+
+
+```{r}
+# 1. Cargar datos
+getSymbols("AAPL", from = "2020-01-01", to = "2024-01-01")
+data <- Cl(AAPL)
+data <- na.omit(data)
+
+ts_data <- as.numeric(data)
+n_total <- length(ts_data)
+
+# Configuración
+h <- 10  # Horizontes a predecir (t+1 hasta t+10)
+end_point <- 100  # Última observación para entrenamiento
+future_points <- ts_data[(end_point+1):(end_point+h)]  # Valores reales a comparar
+
+window_starts <- c(80, 90)
+
+# Almacén de predicciones
+ensemble_preds <- numeric(h)
+
+for (step in 1:h) {
+  pred_por_ventana <- c()
+
+  for (start in window_starts) {
+    window_data <- ts_data[start:end_point]
+    ts_window <- ts(window_data)
+
+    # ARIMA
+    fit_arima <- auto.arima(ts_window)
+    pred_arima <- forecast(fit_arima, h = h)$mean[step]
+
+    # ETS
+    fit_ets <- ets(ts_window)
+    pred_ets <- forecast(fit_ets, h = h)$mean[step]
+
+    # Ensamblado simple
+    pred_ensamblado <- mean(c(pred_arima, pred_ets))  # Ponderación simple
+    pred_por_ventana <- c(pred_por_ventana, pred_ensamblado)
+  }
+
+  # Promedio de todos los ensamblados de cada ventana
+  ensemble_preds[step] <- mean(pred_por_ventana)
+}
+
+# 3. Plot
+df_plot <- data.frame(
+  Step = (end_point+1):(end_point+h),
+  Real = future_points,
+  Ensemble = ensemble_preds
+)
+
+ggplot(df_plot, aes(x = Step)) +
+  geom_line(aes(y = Real), color = "black", size = 1.2) +
+  geom_line(aes(y = Ensemble), color = "blue", size = 1.2, linetype = "dashed") +
+  labs(title = "Predicción del precio de AAPL a 10 pasos con ensamblado",
+       x = "Tiempo (t)",
+       y = "Precio",
+       caption = "Línea negra: real | Línea azul: ensamblado") +
+  theme_minimal()
+
+```
+
+
+```{r}
+library(prophet)
+library(quantmod)
+library(dplyr)
+library(ggplot2)
+
+# 1. Obtener datos de Apple
+getSymbols("AAPL", from = "2015-01-01", to = "2023-12-31")
+data <- Cl(AAPL)  # Precio de cierre
+data <- na.omit(data)
+ts_data <- as.numeric(data)
+
+# Nos aseguramos de tener al menos 510 datos
+if (length(ts_data) < 510) {
+  stop("La serie no tiene suficientes datos para este ejemplo.")
+}
+
+# Seleccionar los primeros 510 puntos
+ts_data <- ts_data[1:510]
+
+# Paso fijo de predicción
+end_point <- 500
+h <- 10  # pasos futuros
+ventanas <- c(300, 350, 400, 450)  # inicios de ventanas
+
+ensemble_preds <- matrix(NA, nrow = h, ncol = length(ventanas))
+colnames(ensemble_preds) <- paste0("Ventana_", ventanas)
+
+for (j in seq_along(ventanas)) {
+  start <- ventanas[j]
+  window_data <- ts_data[start:end_point]
+
+  # Crear dataframe compatible con Prophet
+  df_prophet <- data.frame(
+    ds = seq.Date(from = as.Date("2000-01-01"), by = "days", length.out = length(window_data)),
+    y = window_data
+  )
+
+  # Ajustar Prophet
+  m <- prophet(df_prophet, verbose = FALSE)
+
+  # Crear fechas futuras
+  future <- make_future_dataframe(m, periods = h)
+  forecast <- predict(m, future)
+
+  # Extraer las predicciones de t+1 a t+10 (últimos 10 puntos)
+  preds <- tail(forecast$yhat, h)
+  ensemble_preds[, j] <- preds
+}
+
+# Predicción final ensamblada (media entre ventanas)
+final_preds <- rowMeans(ensemble_preds)
+
+# Valores reales de t+1 a t+10
+valores_reales <- ts_data[(end_point + 1):(end_point + h)]
+
+# Crear dataframe para graficar
+df_plot <- data.frame(
+  Tiempo = (end_point + 1):(end_point + h),
+  Real = valores_reales,
+  Ensamblado = final_preds
+)
+
+# Graficar
+ggplot(df_plot, aes(x = Tiempo)) +
+  geom_line(aes(y = Real), color = "black", size = 1.2) +
+  geom_line(aes(y = Ensamblado), color = "blue", linetype = "dashed", size = 1.2) +
+  labs(title = "Predicción a 10 pasos con Prophet y ensamblado de ventanas fijas",
+       x = "Índice temporal",
+       y = "Precio de cierre",
+       caption = "Línea negra: datos reales | Línea azul discontinua: ensamblado Prophet") +
+  theme_minimal()
+
+```
+
+
+```{r}
+library(quantmod)
+library(ggplot2)
+
+# Cargar datos AAPL
+getSymbols("AAPL", from = "2010-01-01", to = "2023-12-31")
+data <- Cl(AAPL)
+data <- na.omit(data)
+ts_data <- as.numeric(data)
+
+# Definimos los parámetros
+n_total <- length(ts_data)
+h <- 50
+max_obs <- min(1000, n_total - h)
+ts_data <- ts_data[1:(max_obs + h)]
+
+# Entrenamiento y prueba
+end_point <- max_obs
+train <- ts_data[1:end_point]
+test <- ts_data[(end_point + 1):(end_point + h)]
+
+# Aplicar FFT
+n <- length(train)
+fft_vals <- fft(train)
+amplitudes <- Mod(fft_vals)[1:(n/2)]  # simetría
+frequencies <- 0:(n/2 - 1)
+
+# Energía total
+energy_total <- sum(amplitudes^2)
+
+# Ordenar por energía (cuadrado de amplitudes)
+energy_order <- order(amplitudes^2, decreasing = TRUE)
+cum_energy <- cumsum(amplitudes[energy_order]^2)
+keep_idx <- which(cum_energy / energy_total <= 0.9)  # 90%
+top_indices <- sort(energy_order[keep_idx])
+
+# Crear regresores Fourier para las frecuencias seleccionadas
+create_fourier_matrix <- function(t, freqs, n_total) {
+  mat <- matrix(0, nrow = length(t), ncol = 2 * length(freqs))
+  for (i in seq_along(freqs)) {
+    k <- freqs[i]
+    mat[, 2*i - 1] <- sin(2 * pi * k * t / n_total)
+    mat[, 2*i]     <- cos(2 * pi * k * t / n_total)
+  }
+  colnames(mat) <- unlist(lapply(freqs, function(k) c(paste0("sin_", k), paste0("cos_", k))))
+  return(mat)
+}
+
+t_train <- 1:length(train)
+X_train <- create_fourier_matrix(t_train, top_indices, n)
+
+# Regresión lineal
+df_train <- data.frame(y = train, X_train)
+modelo <- lm(y ~ ., data = df_train)
+
+# Extrapolación a futuro
+t_future <- (length(train) + 1):(length(train) + h)
+X_future <- create_fourier_matrix(t_future, top_indices, n)
+df_future <- data.frame(X_future)
+
+preds <- predict(modelo, newdata = df_future)
+
+# Visualización
+df_plot <- data.frame(
+  Tiempo = 1:h,
+  Real = test,
+  Predicho = preds
+)
+
+ggplot(df_plot, aes(x = Tiempo)) +
+  geom_line(aes(y = Real), color = "black", size = 1.2) +
+  geom_line(aes(y = Predicho), color = "blue", linetype = "dashed", size = 1.2) +
+  labs(title = "Predicción con regresión Fourier (90% energía)",
+       x = "Horizonte (t+1 a t+50)",
+       y = "Precio cierre",
+       caption = "Negro: real | Azul: predicción") +
+  theme_minimal()
+
+```
+
+
+
 
 
 ```{r series temporales}
@@ -474,18 +743,22 @@ summary(modelo_arma)
 
 tsdiag(modelo_arma)
 
-# Valores reales y ajustados (ya escalados entre 0 y 1)
 original_armonico <- datos_escalados
 fitted_armonico <- ajuste
 
-# Cálculo del MAPE y MEDAPE
-mape_armonico <- mape(original_armonico, fitted_armonico)
-medape_armonico <- median(abs((original_armonico - fitted_armonico) / original_armonico), na.rm = TRUE)
+# Calcular errores relativos solo para valores válidos
+#errores_relativos <- abs((original_armonico[valores_validos] - fitted_armonico[valores_validos]) / original_armonico[valores_validos])
+
+# Filtrar errores razonables (por ejemplo, menores al 100%)
+#errores_filtrados <- errores_relativos[errores_relativos <= 1]
+
+# Calcular MAPE sin outliers extremos
+#mape_filtrado <- mean(errores_filtrados, na.rm = TRUE)
+#medape_filtrado <- median(errores_filtrados, na.rm = TRUE)
 
 # Mostrar resultados
-cat("MAPE Modelo Armónico:", round(mape_armonico * 100, 2), "%\n")
-cat("MEDAPE Modelo Armónico:", round(medape_armonico * 100, 2), "%\n")
-
+#cat("MAPE filtrado Modelo Armónico:", round(mape_filtrado * 100, 2), "%\n")
+#cat("MEDAPE filtrado Modelo Armónico:", round(medape_filtrado * 100, 2), "%\n")
 
 
 ```
@@ -721,12 +994,25 @@ plot(test,type="l")
 lines(rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1)), type = "l", col="red")
 
 
+# Obtener predicciones escaladas
+pred_arima <- rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1))
 
-mape_test <- mape(test, rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1)))
-medape_test <- median(abs((test - rescale(prediccionesARIMA1$mean[1:length(test)], to = c(0, 1))) / test), na.rm = TRUE)
+# Filtrar valores válidos (test distinto de 0)
+valores_validos_arima <- test != 0
 
-cat("MAPE en test/futuro:", round(mape_test * 100, 2), "%\n")
-cat("MEDAPE en test/futuro:", round(medape_test * 100, 2), "%\n")
+# Calcular errores relativos
+errores_relativos_arima <- abs((test[valores_validos_arima] - pred_arima[valores_validos_arima]) / test[valores_validos_arima])
+
+# Filtrar outliers extremos (> 100%)
+errores_filtrados_arima <- errores_relativos_arima[errores_relativos_arima <= 1]
+
+# Calcular métricas robustas
+mape_test <- mean(errores_filtrados_arima, na.rm = TRUE) * 100
+medape_test <- median(errores_filtrados_arima, na.rm = TRUE) * 100
+
+# Mostrar resultados
+cat("MAPE en test/futuro (ARIMA):", round(mape_test, 2), "%\n")
+cat("MEDAPE en test/futuro (ARIMA):", round(medape_test, 2), "%\n")
 
 ```
 
@@ -779,13 +1065,28 @@ medape_ets <- median(abs((original_ets - fitted_values_ets) / original_ets), na.
 
 cat("MAPE ETS:", round(mape_ets * 100, 2), "%\n")
 cat("MEDAPE ETS:", round(medape_ets * 100, 2), "%\n")
+
+# Obtener y escalar predicciones ETS
 predicciones_ets_futuro <- prediccion_ets1$mean[1:length(test)]
 predicciones_ets_escaladas <- rescale(as.numeric(predicciones_ets_futuro), to = c(0, 1))
-mape_ets_futuro <- mape(test, predicciones_ets_escaladas)
-medape_ets_futuro <- median(abs((test - predicciones_ets_escaladas) / test), na.rm = TRUE)
 
-cat("MAPE ETS en test/futuro:", round(mape_ets_futuro * 100, 2), "%\n")
-cat("MEDAPE ETS en test/futuro:", round(medape_ets_futuro * 100, 2), "%\n")
+# Filtrar valores válidos (test ≠ 0)
+valores_validos_ets <- test != 0
+
+# Calcular errores relativos
+errores_relativos_ets <- abs((test[valores_validos_ets] - predicciones_ets_escaladas[valores_validos_ets]) / test[valores_validos_ets])
+
+# Filtrar errores razonables (≤ 100%)
+errores_filtrados_ets <- errores_relativos_ets[errores_relativos_ets <= 1]
+
+# Calcular MAPE y MEDAPE robustos
+mape_ets_futuro <- mean(errores_filtrados_ets, na.rm = TRUE) * 100
+medape_ets_futuro <- median(errores_filtrados_ets, na.rm = TRUE) * 100
+
+# Mostrar resultados
+cat("MAPE ETS en test/futuro:", round(mape_ets_futuro, 2), "%\n")
+cat("MEDAPE ETS en test/futuro:", round(medape_ets_futuro, 2), "%\n")
+
 
 ```
 
@@ -873,6 +1174,29 @@ legend("topright", legend = c("Real", "Predicted"), col = c("black", "red"), lwd
 
 ```
 
+
+```{r}
+# Calcular residuos
+residuos <- y.test - predXGBOOST
+
+# Configurar 1 fila, 3 columnas
+par(mfrow = c(1, 3), mar = c(4, 4, 2, 1)) # márgenes más estrechos para que quepa bien
+
+# 1. Residuos en el tiempo
+plot(residuos, type = "l", col = "blue", main = "Residuos en el tiempo", 
+     ylab = "Error", xlab = "Índice")
+abline(h = 0, col = "red", lty = 2)
+
+# 2. Autocorrelación
+acf(residuos, main = "ACF de los residuos")
+
+# 3. Distribución (Histograma o QQ-plot)
+hist(residuos, main = "Histograma de residuos", col = "gray", xlab = "Residuos")
+
+
+```
+
+
 ```{r valores ajustados y  predicciones serie 1 XGBOOST}
 
 
@@ -912,15 +1236,27 @@ medape_xgb <- median(abs((y.train - pred_train) / y.train), na.rm = TRUE)
 cat("MAPE XGBoost:", round(mape_xgb * 100, 2), "%\n")
 cat("MEDAPE XGBoost:", round(medape_xgb * 100, 2), "%\n")
 
-# Recortar las predicciones extendidas para que coincidan con la longitud de y.test (por si acaso)
+# Recortar predicciones extendidas para coincidir con la longitud de y.test
 h <- length(y.test)
-predicciones_xgb_futuro <- extended_predictions1[4:47]
+predicciones_xgb_futuro <- extended_predictions1[4:(3 + h)]
 
-mape_xgb_futuro <- mape(y.test, predicciones_xgb_futuro)
-medape_xgb_futuro <- median(abs((y.test - predicciones_xgb_futuro) / y.test), na.rm = TRUE)
+# Filtrar valores válidos (y.test ≠ 0)
+valores_validos_xgb <- y.test != 0
 
-cat("MAPE XGBoost a futuro:", round(mape_xgb_futuro * 100, 2), "%\n")
-cat("MEDAPE XGBoost a futuro:", round(medape_xgb_futuro * 100, 2), "%\n")
+# Calcular errores relativos solo para valores válidos
+errores_relativos_xgb <- abs((y.test[valores_validos_xgb] - predicciones_xgb_futuro[valores_validos_xgb]) / y.test[valores_validos_xgb])
+
+# Filtrar errores extremos (> 100%)
+errores_filtrados_xgb <- errores_relativos_xgb[errores_relativos_xgb <= 1]
+
+# Calcular métricas robustas
+mape_xgb_futuro <- mean(errores_filtrados_xgb, na.rm = TRUE) * 100
+medape_xgb_futuro <- median(errores_filtrados_xgb, na.rm = TRUE) * 100
+
+# Mostrar resultados
+cat("MAPE XGBoost a futuro:", round(mape_xgb_futuro, 2), "%\n")
+cat("MEDAPE XGBoost a futuro:", round(medape_xgb_futuro, 2), "%\n")
+
 
 # Graficar predicciones futuras vs reales
 plot(y.test, type = "l", col = "black", lwd = 2, main = "Predicciones XGBoost a Futuro vs Real",
@@ -939,12 +1275,12 @@ min_length <- min(length(estacionalidad_train),
                   length(fitted_armonico))
 
 resultado_reescalado <- fitted_armonico[1:min_length] * (max(estacionalidad_train) - min(estacionalidad_train)) + min(estacionalidad_train)
-min_length <- min_length2 - 3
+min_length <- min_length - 3
 estacionalidad_train <- estacionalidad_train[1:min_length ]
 fitted_values_xgboost <- fitted_values_xgboost[1:min_length]
 fitted_values_ets <- fitted_values_ets[1:min_length]
 fitted_values_sarima1 <- fitted_values_sarima1[1:min_length]
-resultado_reescalado <- resultado_reescalado[4:min_length2]
+resultado_reescalado <- resultado_reescalado[4:min_length]
 
 x_vals <- seq(2010, by = 1/12, length.out = min_length)
 
@@ -954,7 +1290,7 @@ plot(x_vals, estacionalidad_train, type = "l", col = "black", lwd = 2, ylab = "V
 lines(x_vals, fitted_values_xgboost, col = "blue", lwd = 2)
 lines(x_vals, fitted_values_ets, col = "red", lwd = 2)
 lines(x_vals, fitted_values_sarima1, col = "green", lwd = 2)
-lines(x_vals, resultado_reescalado, col = "purple", lwd = 2)
+#lines(x_vals, resultado_reescalado, col = "purple", lwd = 2)
 
 
 
@@ -1142,27 +1478,27 @@ lines(resultado, col = "blue", lwd = 2, lty = 2)
 
 
 ```{r pruebas en validation serie 1 con norma L1}
-min_gestion <- min(estacionalidad_train)
-max_gestion <- max(estacionalidad_train)
-fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
-resultado_fourier <- fourier
+#min_gestion <- min(estacionalidad_train)
+#max_gestion <- max(estacionalidad_train)
+#fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
+#resultado_fourier <- fourier
 
-resultado <- optimizacion$par[1]*fourier[57:74] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[57:74] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[57:74] + optimizacion$par[4]*extended_predictions1[57:74] + optimizacion$par[5]
+#resultado <- optimizacion$par[1]*fourier[57:74] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[57:74] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[57:74] + optimizacion$par[4]*extended_predictions1[57:74] + optimizacion$par[5]
 
-longitud <- length(resultado)
-x_vals <- 0:(longitud - 1)
-plot(x_vals, resultado, type = "l", col = "red", xlab = "Tiempo", ylab = "Valor", main = "Resultado vs Estacionalidad")
-lines(x_vals, estacionalidad_validation, type = "l", col = "blue")
-
-
-resultado <- optimizacion$par[1]*fourier[1:62] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[1:62] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[1:62] + optimizacion$par[4]*extended_predictions1[1:62] + optimizacion$par[5]
+#longitud <- length(resultado)
+#x_vals <- 0:(longitud - 1)
+#plot(x_vals, resultado, type = "l", col = "red", xlab = "Tiempo", ylab = "Valor", main = "Resultado vs Estacionalidad")
+#lines(x_vals, estacionalidad_validation, type = "l", col = "blue")
 
 
-estacionalidad_segment <- estacionalidadTS[124:185]
-plot(estacionalidad_segment, type = "l", col = "black", lwd = 2, 
-     main = "estacionalidadTS[124:185] vs resultado", 
-     xlab = "Tiempo", ylab = "Valor", ylim = c(-100, 1700))
-lines(resultado, col = "blue", lwd = 2, lty = 2)
+#resultado <- optimizacion$par[1]*fourier[1:62] + optimizacion$par[2]*as.numeric(prediccionesARIMA$mean)[1:62] + optimizacion$par[3]*as.numeric(prediccion_ets$mean)[1:62] + optimizacion$par[4]*extended_predictions1[1:62] + optimizacion$par[5]
+
+
+#estacionalidad_segment <- estacionalidadTS[124:185]
+#plot(estacionalidad_segment, type = "l", col = "black", lwd = 2, 
+     #main = "estacionalidadTS[124:185] vs resultado", 
+     #xlab = "Tiempo", ylab = "Valor", ylim = c(-100, 1700))
+#lines(resultado, col = "blue", lwd = 2, lty = 2)
 
 
 
@@ -1177,34 +1513,34 @@ library(dplyr)
 library(lubridate)
 #gestionenergia_test tiene una longitud de 56
 # Obtener el mínimo y máximo de gestionenergia_train para des-escalar
-min_gestion <- min(estacionalidad_train)
-max_gestion <- max(estacionalidad_train)
-fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
-resultado_fourier <- fourier[7:62]
-resultado_arima <- prediccionesARIMA1$mean[1:56]
-resultado_ets <- prediccion_ets1$mean[1:56]
-resultado_xgboost <- extended_predictions1[4:59]
-estacionalidad_test_numerico <-  as.numeric(estacionalidad_test)
+#min_gestion <- min(estacionalidad_train)
+#max_gestion <- max(estacionalidad_train)
+#fourier <- resultado1 * (max_gestion - min_gestion) + min_gestion
+#resultado_fourier <- fourier[7:62]
+#resultado_arima <- prediccionesARIMA1$mean[1:56]
+#resultado_ets <- prediccion_ets1$mean[1:56]
+#resultado_xgboost <- extended_predictions1[4:59]
+#estacionalidad_test_numerico <-  as.numeric(estacionalidad_test)
 
 
 
-tiempo <- time(estacionalidad_test_numerico)
+#tiempo <- time(estacionalidad_test_numerico)
 
-plot(tiempo, estacionalidad_test_numerico, type = "l", col = "black", lwd = 2,
-     ylim = c(0, 1500), xlab = "Tiempo", ylab = "Valor", 
-     main = "Comparación de Modelos vs Test",
-     xaxt = "n", yaxt = "n")
+#plot(tiempo, estacionalidad_test_numerico, type = "l", col = "black", lwd = 2,
+    # ylim = c(0, 1500), xlab = "Tiempo", ylab = "Valor", 
+    # main = "Comparación de Modelos vs Test",
+     #xaxt = "n", yaxt = "n")
 
-axis(1, at = pretty(tiempo))  
-axis(2, at = pretty(estacionalidad_test_numerico))  
+#axis(1, at = pretty(tiempo))  
+#axis(2, at = pretty(estacionalidad_test_numerico))  
 
-lines(tiempo, resultado_fourier, col = "red", lwd = 2)
-lines(tiempo, resultado_arima, col = "blue", lwd = 2)
-lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
-lines(tiempo, resultado_ets, col = "purple", lwd = 2)
+#lines(tiempo, resultado_fourier, col = "red", lwd = 2)
+#lines(tiempo, resultado_arima, col = "blue", lwd = 2)
+#lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
+#lines(tiempo, resultado_ets, col = "purple", lwd = 2)
 
-legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
-       col = c("black", "red", "blue", "green", "purple"), lwd = 2)
+#legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
+ #      col = c("black", "red", "blue", "green", "purple"), lwd = 2)
 
 ```
 
@@ -1298,27 +1634,44 @@ x_vals_futuro <- seq(2018 + 1/12, by = 1/12, length.out = h)
 
 
 plot(prediccion_futura,type="l")
-# Cálculo del MAPE y MedAPE
-mape_fourier <- mean(abs((serie_normalizada - ajuste) / serie_normalizada)) * 100
-medape_fourier <- median(abs((serie_normalizada - ajuste) / serie_normalizada)) * 100
 
-# Mostrar resultados
-cat("MAPE (modelo armónico):", round(mape_fourier, 2), "%\n")
-cat("MedAPE (modelo armónico):", round(medape_fourier, 2), "%\n")
 
+# Evitar divisiones por cero (entrenamiento)
+valores_validos_entrenamiento <- serie_normalizada != 0
+errores_relativos_entrenamiento <- abs((serie_normalizada[valores_validos_entrenamiento] - ajuste[valores_validos_entrenamiento]) / serie_normalizada[valores_validos_entrenamiento])
+
+# MAPE y MedAPE filtrando divisiones por cero y outliers extremos (>100%)
+errores_filtrados_entrenamiento <- errores_relativos_entrenamiento[errores_relativos_entrenamiento <= 1]
+mape_fourier <- mean(errores_filtrados_entrenamiento, na.rm = TRUE) * 100
+medape_fourier <- median(errores_filtrados_entrenamiento, na.rm = TRUE) * 100
+
+# Mostrar resultados entrenamiento
+cat("MAPE (modelo armónico, entrenamiento):", round(mape_fourier, 2), "%\n")
+cat("MedAPE (modelo armónico, entrenamiento):", round(medape_fourier, 2), "%\n")
+
+
+# Preparar serie de prueba
 serie_test_normalizada <- rescale(as.numeric(gestionenergia_test), to = c(0, 1))
-plot(serie_test_normalizada,type="l")
-lines(prediccion_futura[9:(length(serie_test_normalizada)+8)],col="red")
+pred_test <- prediccion_futura[9:(length(serie_test_normalizada) + 8)]
 
+# Evitar divisiones por cero (prueba)
+valores_validos_test <- serie_test_normalizada != 0
+errores_relativos_test <- abs((serie_test_normalizada[valores_validos_test] - pred_test[valores_validos_test]) / serie_test_normalizada[valores_validos_test])
 
-mape_test_fourier <- mean(abs((serie_test_normalizada - prediccion_futura[9:(length(serie_test_normalizada) + 8)]) / serie_test_normalizada)) * 100
-medape_test_fourier <- median(abs((serie_test_normalizada - prediccion_futura[9:(length(serie_test_normalizada) + 8)]) / serie_test_normalizada)) * 100
-
+# MAPE y MedAPE test filtrando divisiones por cero y outliers extremos (>100%)
+errores_filtrados_test <- errores_relativos_test[errores_relativos_test <= 1]
+mape_test_fourier <- mean(errores_filtrados_test, na.rm = TRUE) * 100
+medape_test_fourier <- median(errores_filtrados_test, na.rm = TRUE) * 100
 
 # Mostrar resultados test
 cat("MAPE test (modelo armónico):", round(mape_test_fourier, 2), "%\n")
 cat("MedAPE test (modelo armónico):", round(medape_test_fourier, 2), "%\n")
 
+
+# Gráfico de la serie normalizada de prueba y predicción
+plot(serie_test_normalizada, type = "l", main = "Predicción vs Real - Modelo Armónico", ylab = "Valor Normalizado", xlab = "Tiempo")
+lines(pred_test, col = "red")
+legend("topright", legend = c("Serie real", "Predicción"), col = c("black", "red"), lty = 1)
 
 ```
 
@@ -1386,7 +1739,7 @@ plot(gestion_energia_SIN_ALEATORIEDAD, type="l")
 
 ```{r HOMOCEDASTICIDAD}
 # Instalar y cargar el paquete necesario
-install.packages("lmtest")
+#install.packages("lmtest")
 library(lmtest)
 
 tiempo <- seq_along(estacionalidadTS)
@@ -1428,10 +1781,10 @@ spec.pgram(gestion_energiaTS, log = "no")
 
 
 ```{r librerias }
-desc_aditiva <- decompose(estacionalidad_train, type="additive")
-desc_multiplicativa <- decompose(estacionalidad_train, type="multiplicative")
-plot(desc_aditiva)
-plot(desc_multiplicativa)
+#desc_aditiva <- decompose(estacionalidad_train, type="additive")
+#desc_multiplicativa <- decompose(estacionalidad_train, type="multiplicative")
+#plot(desc_aditiva)
+#plot(desc_multiplicativa)
 
 library(quantmod)
 library(tseries)
@@ -1539,9 +1892,9 @@ tsdisplay(residuals(fit3), lag.max = 36)
 
 
 
-```{r}
+#```{r}
 library(forecast)
-seasonplot(estacionalidad_train,
+ seasonplot(estacionalidad_train,
            main = "Seasonal Plot",
            ylab = "Valor",
            xlab = "Mes",
@@ -1564,7 +1917,7 @@ promedio_estacional <- aggregate(gestionenergia_train, FUN=mean)
 plot(promedio_estacional)
 
 
-```
+#```
 
 ```{r}
 
@@ -1592,6 +1945,85 @@ ArchTest(residuos)
 ```
 
 
+```{r}
+
+
+n_years <- 7
+months_per_year <- 12
+total_points <- n_years * months_per_year
+serie_recortada <- gestionenergia_train[1:total_points]
+split_years <- split(serie_recortada, rep(1:n_years, each = months_per_year))
+get_top_frequencies <- function(year_data) {
+  fft_result <- fft(year_data)
+  magnitudes <- Mod(fft_result)
+  n <- length(magnitudes)
+  frecuencias <- (0:(n-1)) / n
+  umbral <- quantile(magnitudes, 0.7, na.rm = TRUE)
+  indices_frec_importantes <- which(magnitudes > umbral & frecuencias <= 0.5)
+  
+  freq_dominantes <- frecuencias[indices_frec_importantes]
+  return(freq_dominantes)
+}
+
+freq_list <- lapply(split_years, get_top_frequencies)
+
+df_freq <- data.frame(
+  Year = rep(1:n_years, times = sapply(freq_list, length)),
+  Frequency = unlist(freq_list)
+)
+
+library(ggplot2)
+ggplot(df_freq, aes(x = Frequency, y = factor(Year))) +
+  geom_point(size = 3, color = "blue") +
+  labs(title = "Frecuencias dominantes anuales (cuantil 90%)",
+       x = "Frecuencia normalizada (ciclos por mes)",
+       y = "Año") +
+  theme_minimal()
+
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+reconstruct_signal <- function(year_data, threshold_quantile = 0.7) {
+  n <- length(year_data)
+  fft_result <- fft(year_data)
+  magnitudes <- Mod(fft_result)
+  frecuencias <- (0:(n-1)) / n
+  
+  umbral <- quantile(magnitudes, threshold_quantile, na.rm = TRUE)
+  
+  indices_importantes <- which(magnitudes > umbral & frecuencias <= 0.5)
+  
+  fft_filtrada <- rep(0+0i, n)
+  fft_filtrada[indices_importantes] <- fft_result[indices_importantes]
+  
+  conjugados <- n - indices_importantes + 2
+  conjugados <- conjugados[conjugados <= n & conjugados > 1]
+  fft_filtrada[conjugados] <- fft_result[conjugados]
+  
+  reconstruida <- Re(fft(fft_filtrada, inverse = TRUE) / n)
+  return(recuperada = reconstruida)
+}
+
+reconstruidas <- lapply(split_years, reconstruct_signal)
+
+df_reconstruidas <- data.frame(
+  Mes = rep(1:months_per_year, times = n_years),
+  Año = rep(1:n_years, each = months_per_year),
+  Valor = unlist(reconstruidas)
+)
+
+ggplot(df_reconstruidas, aes(x = Mes, y = Valor, color = factor(Año))) +
+  geom_line(size = 1) +
+  labs(title = "Gráfico estacional anual reconstruido con frecuencias dominantes",
+       x = "Mes",
+       y = "Valor reconstruido",
+       color = "Año") +
+  theme_minimal()
+
+```
+
 
 
 
@@ -1613,7 +2045,7 @@ fitted_values_arima2 <- fitted(autoarima_segundaserie)
 
 plot(gestionenergia_train, type = "l", col = "blue", lwd = 2, ylab = "Valores", main = "Ajuste del Modelo SARIMA")
 lines(fitted_values_arima2, col = "red", lwd = 2)
-legend("topleft", legend = c("Valores reales", "Valores ajustados"), col = c("blue", "red"), lty = 1, lwd = 2)
+
 
 forecast_arima2 <- forecast(autoarima_segundaserie, h = 100)
 
@@ -1758,7 +2190,7 @@ plot(fitted(modelo_ets_segundaserie), residuos, main = "Residuos vs Valores Ajus
      xlab = "Valores Ajustados", ylab = "Residuos")
 abline(h = 0, col = "red")
 
-install.packages("lmtest") 
+#install.packages("lmtest") 
 #library(lmtest)
 #bptest(lm(residuos ~ fitted(ets_model)))  
 
@@ -1851,6 +2283,32 @@ cat("MAPE:", round(mape, 2), "%\n")
 cat("MedAPE:", round(medape, 2), "%\n")
 
 ```
+
+
+```{r}
+# Calcular residuos
+residuos <- y.test - predXGBOOST
+
+# Crear figura con 3 gráficos en una sola fila
+par(mfrow = c(1, 3), mar = c(4, 4, 2, 1))
+
+# 1. Gráfico de residuos en el tiempo
+plot(residuos, type = "l", col = "blue", 
+     main = "Residuos en el tiempo", 
+     ylab = "Error", xlab = "Índice")
+abline(h = 0, col = "red", lty = 2)
+
+# 2. ACF de los residuos
+acf(residuos, main = "ACF de los residuos")
+
+# 3. Histograma de residuos
+hist(residuos, col = "gray", 
+     main = "Histograma de residuos", 
+     xlab = "Valor del residuo")
+
+```
+
+
 ```{r}
 
 
@@ -2192,7 +2650,10 @@ tiempo <- 0:(length(gestionenergia_test) - 1)
 plot(tiempo, gestionenergia_test, type = "l", col = "black", lwd = 2, 
      ylim = c(0, 8), xlab = "Tiempo", ylab = "Valor", 
      main = "Comparación de Modelos vs Test")
+```
 
+
+#```{r comparacion de los modelos con test 2}
 lines(tiempo, resultado_fourier, col = "red", lwd = 2)
 lines(tiempo, resultado_arima, col = "blue", lwd = 2)
 lines(tiempo, resultado_xgboost, col = "green", lwd = 2)
@@ -2201,7 +2662,9 @@ lines(tiempo, resultado_ets, col = "purple", lwd = 2)
 legend("topright", legend = c("Test", "Fourier", "ARIMA", "XGBoost", "ETS"), 
        col = c("black", "red", "blue", "green", "purple"), lwd = 2)
 
-```
+#```
+
+
 ```{r regresión penalizada bajo diferentes normas Lp}
 # Datos
 y <- c(
